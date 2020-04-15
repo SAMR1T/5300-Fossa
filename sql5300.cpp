@@ -18,8 +18,143 @@ using namespace hsql;
 
 string unparseStatement(const SQLStatement *stmt);
 string unparseCreate(const CreateStatement *stmt);
+string unparseSelect(const SelectStatement *stmt);
 string getcolumnDefinitionString(const ColumnDefinition *col);
 
+string operatorExpressionToString(const Expr *expr);
+
+/**
+ * Convert hyrise Expr AST back to SQL 
+ *
+ *
+ */
+
+string expressionToString(const Expr *expr){
+  string result;
+  switch (expr->type){
+      case kExprStar:
+        result += "*";
+        break;
+      case kExprColumnRef:
+        if (expr->table != NULL)
+          result += string(expr->table) + ".";
+      case kExprLiteralString:
+        result += expr->name;
+        break;
+      case kExprLiteralFloat:
+        result += to_string(expr->fval);
+        break;
+      case kExprLiteralInt:
+        result += to_string(expr->ival);
+        break;
+      case kExprFunctionRef:
+        result += string(expr->name) + "?" + expr->expr->name;
+        break;
+      case kExprOperator:
+        result += operatorExpressionToString(expr);
+        break;
+      default:
+        result += "???";
+        break;    
+  }
+  if (expr->alias != NULL)
+    result += string(" AS ") + expr->alias;
+  return result;
+}
+
+
+/**
+ *Convert the hyrise Expr AST for an operator back to SQL
+ *
+ *
+ *
+ */
+
+string operatorExpressionToString(const Expr *expr){
+  if (expr == NULL)
+    return "null";
+
+  string result;
+
+  if (expr->opType == Expr::NOT)
+    result += "NOT ";
+
+  result += expressionToString(expr->expr) + " ";
+
+  switch (expr->opType){
+      case Expr::SIMPLE_OP:
+        result += expr->opChar;
+        break;
+      case Expr::AND:
+        result += "AND";
+        break;
+      case Expr::OR:
+        result += "OR";
+        break;
+      default:
+        break; // e.g., for NOI
+  }
+
+  if (expr->expr2 != NULL)
+    result += " " + expressionToString(expr->expr2);
+  return result;
+
+}
+
+/*
+ *Convert the hyrise tableRef AST back to the equivalent SQL
+ *
+ *
+ */
+
+string tableRefInfoToString(const TableRef *table){
+  string result;
+  switch (table->type){
+      case kTableSelect:
+        result += "kTableSelect FIXME";
+        break;
+      case kTableName:
+        result += table->name;
+        if (table->alias != NULL)
+          result += string(" AS ") + table->alias;
+        break;
+      case kTableJoin:
+        result += tableRefInfoToString(table->join->left);
+        switch (table->join->type) {
+            case kJoinCross:
+            case kJoinInner:  
+              result += " JOIN ";
+              break;
+            case kJoinOuter:  
+            case kJoinLeftOuter:
+            case kJoinLeft:           
+              result += " LEFT JOIN ";
+              break;
+            case kJoinRightOuter:  
+            case kJoinRight:
+              result += " NATURAL JOIN ";
+              break;              
+        }
+        result += tableRefInfoToString(table->join->right);
+        if (table->join->condition != NULL)
+          result += " ON " + expressionToString(table->join->condition);
+        break;
+      case kTableCrossProduct:
+        bool doComma = false;
+        for (TableRef *tbl : *table->list){
+          if (doComma)
+            result += ", ";
+          result += tableRefInfoToString(tbl);
+          doComma = true;
+        }
+        break;
+
+    }
+  return result;
+  
+}
+
+ 
 /*
  * Determines the type of statement
  * create or select statement 
@@ -30,8 +165,8 @@ string unparseStatement(const SQLStatement *statement) {
     switch(statement->type()){
         case kStmtCreate :
             return unparseCreate((CreateStatement*) statement);
-        case kStmtSelect:
-            return "";
+        case kStmtSelect :
+          return unparseSelect((SelectStatement*) statement);
         default :
             return "";
     }
@@ -55,6 +190,30 @@ string unparseCreate(const CreateStatement *statement) {
     }
     return result + ")";
 }
+
+/*
+ *8Parse the Select statement
+ *
+ *8return string of SQL statement
+ *
+ */
+
+string unparseSelect(const SelectStatement *statement) {
+    string result("SELECT ");
+    bool doComma = false;
+    for (Expr *expr : *statement->selectList){
+      if (doComma)
+        result += ", ";
+      result += expressionToString(expr);
+      doComma = true;
+    }
+    result += " FROM " + tableRefInfoToString(statement->fromTable);
+    if (statement->whereClause != NULL)
+      result += " WHERE " + expressionToString(statement->whereClause);      
+    return result;
+
+}
+
 
 /*
  * parse the SQL column definition into string
