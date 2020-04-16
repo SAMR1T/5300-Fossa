@@ -20,15 +20,13 @@ string unparseStatement(const SQLStatement *stmt);
 string unparseCreate(const CreateStatement *stmt);
 string unparseSelect(const SelectStatement *stmt);
 string getcolumnDefinitionString(const ColumnDefinition *col);
-
 string operatorExpressionToString(const Expr *expr);
 
-/**
- * Convert hyrise Expr AST back to SQL 
- *
- *
+/*
+ * parse SQL statement exprression
+ * @param SQL statement expression
+ * @return string form
  */
-
 string expressionToString(const Expr *expr){
   string result;
   switch (expr->type){
@@ -154,7 +152,84 @@ string tableRefInfoToString(const TableRef *table){
   
 }
 
- 
+/*
+ * Parse table reference of SQL select statement
+ * Checks whether a SQL statement has join
+ * Checks whether SQL satement selects multiple columns data with alais 
+ * @param table reference
+ * @return string form
+ */
+string parseTableRef(const TableRef *table)
+{
+    string result("");
+    if (table->type != kTableJoin)
+    {
+        if (table->list == NULL || table->list->size() == 0)
+        {
+            result += table->name;
+            if(table->alias != NULL)
+            {
+                result += " AS ";
+                result += string(table->alias);
+            }
+        }
+        else
+        {
+            for(uint i =0; i< table->list->size();i++)
+            {
+                if (i > 0)
+                    result += ", ";
+                TableRef *tblRef = table->list->at(i);
+                result += tblRef->name;
+                if(tblRef->alias != NULL)
+                {
+                    result += " AS ";
+                    result += tblRef->getName();
+                }
+            }
+        }
+    }
+    else
+    {
+        result += parseTableRef(table->join->left);
+        switch(table->join->type)
+        {
+            case kJoinLeft:
+                result += " LEFT JOIN ";
+                break;
+            case kJoinOuter:
+                result += " OUTER JOIN ";
+                break;
+            case kJoinInner:
+                result += " INNER JOIN ";
+                break;
+            case kJoinRight:
+                result += " RIGHT JOIN ";
+                break;
+            case kJoinLeftOuter:
+                result += " LEFT OUTER JOIN ";
+                break; 
+            case kJoinRightOuter:                                                                                                                                              
+                result += " RIGHT OUTER JOIN ";
+                break;
+            case kJoinCross:
+                result += " CROSS JOIN ";
+                break;
+            case kJoinNatural:
+                result += " NATURAL JOIN ";
+                break;
+        }
+        result += parseTableRef(table->join->right);
+        if (table->join->condition != NULL)
+        {
+            result += " ON ";
+            result += expressionToString(table->join->condition);
+        }
+    }
+    return result;
+}
+
+
 /*
  * Determines the type of statement
  * create or select statement 
@@ -192,12 +267,10 @@ string unparseCreate(const CreateStatement *statement) {
 }
 
 /*
- *8Parse the Select statement
- *
- *8return string of SQL statement
- *
+ * parse the SQL select statement
+ * @param stmt is the SQL select statement which need to be translated into string
+ * @return string of SQL select satement by combing whole string together
  */
-
 string unparseSelect(const SelectStatement *statement) {
     string result("SELECT ");
     bool doComma = false;
