@@ -93,7 +93,7 @@ string operatorExpressionToString(const Expr *expr){
 /*
  * parses table reference of SQL select statement
  * @param table reference
- * @return string form
+ * @return string form 
  */
 string parseTableRef(const TableRef *table)
 {
