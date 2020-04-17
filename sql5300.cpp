@@ -1,6 +1,6 @@
 /*
  *sql5300.cpp main file as part of sql5300 DBMS  for milestone 1
- *authors Sonali Dsouza and Thomas Ficca
+ *authors- Sonali Dsouza and Thomas Ficca
  *see Seattle University, CPSC4300/5300, Spring 2020
  */
 
@@ -16,11 +16,14 @@
 using namespace std;
 using namespace hsql;
 
-string unparseStatement(const SQLStatement *stmt);
-string unparseCreate(const CreateStatement *stmt);
-string unparseSelect(const SelectStatement *stmt);
+//forward declare
+string unparseStatement(const SQLStatement *statement);
+string unparseCreate(const CreateStatement *statement);
+string unparseSelect(const SelectStatement *statement);
 string getcolumnDefinitionString(const ColumnDefinition *col);
 string operatorExpressionToString(const Expr *expr);
+string parseTableRef(const TableRef *table);
+string expressionToString(const Expr *expr);
 
 /*
  * parses SQL statement exprression
