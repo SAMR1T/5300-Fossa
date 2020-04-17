@@ -72,85 +72,22 @@ string operatorExpressionToString(const Expr *expr){
   if (expr == NULL)
     return "null";
 
-  string result;
-
-  if (expr->opType == Expr::NOT)
-    result += "NOT ";
-
-  result += expressionToString(expr->expr) + " ";
-
-  switch (expr->opType){
-      case Expr::SIMPLE_OP:
-        result += expr->opChar;
-        break;
-      case Expr::AND:
-        result += "AND";
-        break;
-      case Expr::OR:
-        result += "OR";
-        break;
-      default:
-        break; // e.g., for NOI
-  }
-
-  if (expr->expr2 != NULL)
-    result += " " + expressionToString(expr->expr2);
-  return result;
-
-}
-
-/*
- *Convert the hyrise tableRef AST back to the equivalent SQL
- *
- *
- */
-
-string tableRefInfoToString(const TableRef *table){
-  string result;
-  switch (table->type){
-      case kTableSelect:
-        result += "kTableSelect FIXME";
-        break;
-      case kTableName:
-        result += table->name;
-        if (table->alias != NULL)
-          result += string(" AS ") + table->alias;
-        break;
-      case kTableJoin:
-        result += tableRefInfoToString(table->join->left);
-        switch (table->join->type) {
-            case kJoinCross:
-            case kJoinInner:  
-              result += " JOIN ";
-              break;
-            case kJoinOuter:  
-            case kJoinLeftOuter:
-            case kJoinLeft:           
-              result += " LEFT JOIN ";
-              break;
-            case kJoinRightOuter:  
-            case kJoinRight:
-              result += " NATURAL JOIN ";
-              break;              
-        }
-        result += tableRefInfoToString(table->join->right);
-        if (table->join->condition != NULL)
-          result += " ON " + expressionToString(table->join->condition);
-        break;
-      case kTableCrossProduct:
-        bool doComma = false;
-        for (TableRef *tbl : *table->list){
-          if (doComma)
-            result += ", ";
-          result += tableRefInfoToString(tbl);
-          doComma = true;
-        }
-        break;
-
+   string result(" ");
+    result += expressionToString(expr->expr);
+    result += " ";
+    switch (expr->opType) 
+    {
+        case Expr::SIMPLE_OP:
+            result += expr->opChar;
+            break;
+        default:
+            result += " undefined ";
     }
-  return result;
-  
-}
+    result += " ";
+    if (expr->expr2 != NULL) 
+     result += expressionToString(expr->expr2);
+    return result;
+  }
 
 /*
  * Parse table reference of SQL select statement
@@ -272,19 +209,21 @@ string unparseCreate(const CreateStatement *statement) {
  * @return string of SQL select satement by combing whole string together
  */
 string unparseSelect(const SelectStatement *statement) {
-    string result("SELECT ");
-    bool doComma = false;
-    for (Expr *expr : *statement->selectList){
-      if (doComma)
-        result += ", ";
-      result += expressionToString(expr);
-      doComma = true;
+    string result(" SELECT ");
+    for(uint i=0; i< statement->selectList->size(); i++)
+    {
+        if (i > 0)
+            result += ", ";
+        result += expressionToString(statement->selectList->at(i));
     }
-    result += " FROM " + tableRefInfoToString(statement->fromTable);
-    if (statement->whereClause != NULL)
-      result += " WHERE " + expressionToString(statement->whereClause);      
+    result += " FROM ";
+    result += parseTableRef(statement->fromTable);
+    if(statement->whereClause != NULL)
+    {
+        result += " WHERE ";
+        result += expressionToString(statement->whereClause);
+    }
     return result;
-
 }
 
 
@@ -355,7 +294,7 @@ int main (int argc, char *argv[])
                 delete output;
             } 
             else {
-                std::cout<<"Statement is not valid"<<std::endl;
+                std::cout<<"Invalid SQL:"<< query << std::endl;
             }
         }
         catch(...){
