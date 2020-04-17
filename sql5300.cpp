@@ -23,7 +23,7 @@ string getcolumnDefinitionString(const ColumnDefinition *col);
 string operatorExpressionToString(const Expr *expr);
 
 /*
- * parse SQL statement exprression
+ * parses SQL statement exprression
  * @param SQL statement expression
  * @return string form
  */
@@ -61,13 +61,11 @@ string expressionToString(const Expr *expr){
 }
 
 
-/**
- *Convert the hyrise Expr AST for an operator back to SQL
- *
- *
- *
+/*
+ * parses the operator expression
+ * @param SQL expression that needs to be translated into string 
+ * @return string form
  */
-
 string operatorExpressionToString(const Expr *expr){
   if (expr == NULL)
     return "null";
@@ -90,9 +88,7 @@ string operatorExpressionToString(const Expr *expr){
   }
 
 /*
- * Parse table reference of SQL select statement
- * Checks whether a SQL statement has join
- * Checks whether SQL satement selects multiple columns data with alais 
+ * parses table reference of SQL select statement
  * @param table reference
  * @return string form
  */
@@ -116,12 +112,12 @@ string parseTableRef(const TableRef *table)
             {
                 if (i > 0)
                     result += ", ";
-                TableRef *tblRef = table->list->at(i);
-                result += tblRef->name;
-                if(tblRef->alias != NULL)
+                TableRef *tableRef = table->list->at(i);
+                result += tableRef->name;
+                if(tableRef->alias != NULL)
                 {
                     result += " AS ";
-                    result += tblRef->getName();
+                    result += tableRef->getName();
                 }
             }
         }
@@ -134,14 +130,14 @@ string parseTableRef(const TableRef *table)
             case kJoinLeft:
                 result += " LEFT JOIN ";
                 break;
+            case kJoinRight:
+                result += " RIGHT JOIN ";
+                break;
             case kJoinOuter:
                 result += " OUTER JOIN ";
                 break;
             case kJoinInner:
                 result += " INNER JOIN ";
-                break;
-            case kJoinRight:
-                result += " RIGHT JOIN ";
                 break;
             case kJoinLeftOuter:
                 result += " LEFT OUTER JOIN ";
@@ -170,8 +166,8 @@ string parseTableRef(const TableRef *table)
 /*
  * Determines the type of statement
  * create or select statement 
- * @param stmt is SQL statement which needs to be translated into string
- * @return string after translation of SQL statement
+ * @param statement is SQL statement which needs to be translated into string
+ * @return translated string
  */
 string unparseStatement(const SQLStatement *statement) {
     switch(statement->type()){
@@ -205,8 +201,8 @@ string unparseCreate(const CreateStatement *statement) {
 
 /*
  * parse the SQL select statement
- * @param stmt is the SQL select statement which need to be translated into string
- * @return string of SQL select satement by combing whole string together
+ * @param SQL select statement which needs to be translated into string
+ * @return string form of SQL select statement
  */
 string unparseSelect(const SelectStatement *statement) {
     string result(" SELECT ");
@@ -228,9 +224,9 @@ string unparseSelect(const SelectStatement *statement) {
 
 
 /*
- * parse the SQL column definition into string
+ * parses the SQL column definition into string
  * @param column definition in SQL create statement 
- * @return string of column name and it's type 
+ * @return string containing column name and it's type 
  */
 string getcolumnDefinitionString(const ColumnDefinition *col) {
     string result(col->name);
@@ -252,14 +248,10 @@ string getcolumnDefinitionString(const ColumnDefinition *col) {
 }
 
 
-/*
- * main function from where execution starts
- * initialize the db environment
- * initialize the database
- * takes input from user
- * parse the input string into SQL statement
- * pases the SQL statements to unparseStatement method 
- * displays the translated string as a desired output
+/**
+ * Main entry point of the sql5300 program
+ * @args dbenvpath  the path to the BerkeleyDB database environment
+ * displays the translated string
  */
 int main (int argc, char *argv[])
 {
