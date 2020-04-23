@@ -1,5 +1,5 @@
 /*
- *sql5300.cpp main file as part of sql5300 DBMS  for milestone 1
+ *sql5300.cpp main file as part of sql5300 DBMS  for milestone 2
  *authors- Sonali Dsouza and Thomas Ficca
  *see Seattle University, CPSC4300/5300, Spring 2020
  */
@@ -11,7 +11,8 @@
 #include "SQLParser.h"
 #include "sqlhelper.h"
 #include <typeinfo>
-#include<sstream>
+#include <sstream>
+#include "heap_storage.h"
 
 using namespace std;
 using namespace hsql;
@@ -279,6 +280,11 @@ int main (int argc, char *argv[])
             continue;
         if (query == "quit")
             break;
+        if (query == "test"){
+          cout << "test_heap_storage: " <<
+            (test_heap_storage() ? "ok" : "failed") << endl;
+          continue;
+        }
         try{
             hsql::SQLParserResult* output = hsql::SQLParser::parseSQLString(query);
             if (output->isValid()) {
