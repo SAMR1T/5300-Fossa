@@ -1,9 +1,9 @@
-/*
- *sql5300.cpp main file as part of sql5300 DBMS  for milestone 2
- *authors- Sonali Dsouza and Thomas Ficca
- *see Seattle University, CPSC4300/5300, Spring 2020
+/**
+ * sql5300.cpp main file as part of sql5300 DBMS  for milestone 2
+ *
+ * @author Thomas ficca and Sonali d'souza
+ * @see "Seattle University, CPSC4300/5300, Spring 2020"
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
