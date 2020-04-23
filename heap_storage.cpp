@@ -1,8 +1,6 @@
 /**
  * heap_storage.cpp - contains implementation of:
- * SlottedPage
- * HeapFile
- * HeapTable
+ * SlottedPage, HeapFile
  *
  * @author Thomas ficca and Sonali d'souza
  * @see "Seattle University, CPSC4300/5300, Spring 2020"
@@ -61,13 +59,13 @@ Dbt* SlottedPage::get(RecordID record_id){
 }
 
 RecordIDs* SlottedPage::ids(void){
-    RecordIDs *allIDs = new RecordIDs();
+    RecordIDs *recordIds = new RecordIDs();
     for(int i = 1; i < this->num_records + 1; i++){
         if(get(i) != NULL){
-            allIDs->push_back(i);
+            recordIds->push_back(i);
         }
     }
-    return allIDs;
+    return recordIds;
 }
 
 // Get 2-byte integer at given offset in block.
