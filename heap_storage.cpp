@@ -26,7 +26,11 @@ SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new) : DbBlock(bl
     }
 }
 
-// Add a new record to the block. Return its id.
+/**
+ * Add a new record to the block. 
+ * @param data the Dbt object
+ * @return the record ID of the added record
+ **/
 RecordID SlottedPage::add(const Dbt* data) {
     if (!has_room(data->get_size()))
         throw DbBlockNoRoomError("not enough room for new record");
@@ -40,6 +44,10 @@ RecordID SlottedPage::add(const Dbt* data) {
     return id;
 }
 
+/**
+ * Replace a existing record with given data 
+ * @param data the Dbt object 
+ **/
 void SlottedPage::put(RecordID record_id, const Dbt & data) {
     u16 location, size;
     u16 data_size = (u16)data.get_size();
@@ -60,6 +68,10 @@ void SlottedPage::put(RecordID record_id, const Dbt & data) {
 	put_header(record_id, data_size, location);
 }
 
+/**
+ * Delete a record with given record_id
+ * @param record_id of the record that needs to be deleted
+ **/
 void SlottedPage::del(RecordID record_id) {
     u16 location, size;
 	get_header(size, location, record_id);
@@ -67,11 +79,20 @@ void SlottedPage::del(RecordID record_id) {
 	slide(location, location + size);
 }
 
+/**
+ * Check if there is enough room for given size
+ * @param size to be checked
+ **/
 bool SlottedPage::has_room(u16 size)  {
     u16 free_space = this->end_free - (u16)(4 * (this->num_records + 1));
 	return size <= free_space;
 }
 
+/**
+ * Slide data
+ * @param start
+ * @param end
+ **/
 void SlottedPage::slide(u16 start, u16 end) {
 	int move = end - start;
 	if (move == 0)
@@ -101,6 +122,10 @@ void SlottedPage::slide(u16 start, u16 end) {
 	put_header();
 }
 
+/**
+ * Get record with given record id
+ * @param record_id
+ **/
 Dbt* SlottedPage::get(RecordID record_id){
     u16 size, location;
 	get_header(size, location, record_id);
@@ -109,6 +134,9 @@ Dbt* SlottedPage::get(RecordID record_id){
 	return new Dbt(this->address(location), size);
 }
 
+/**
+ * Get all the record ids
+ **/
 RecordIDs* SlottedPage::ids(void){
     RecordIDs *recordIds = new RecordIDs();
     for(int i = 1; i < this->num_records + 1; i++){
