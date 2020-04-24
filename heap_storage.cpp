@@ -46,9 +46,14 @@ void SlottedPage::put(RecordID record_id, const Dbt & data) {
 
 void SlottedPage::del(RecordID record_id) {}
 
-bool SlottedPage::has_room(u16 size)  {return true;}
+bool SlottedPage::has_room(u16 size)  {
+    u16 free_space = this->end_free - (u16)(4 * (this->num_records + 1));
+	return size <= free_space;
+}
 
-void SlottedPage::slide(u16 start, u16 end) {}
+void SlottedPage::slide(u16 start, u16 end) {
+    
+}
 
 Dbt* SlottedPage::get(RecordID record_id){
     u16 size, location;
@@ -97,6 +102,9 @@ void SlottedPage::get_header( u16 &size, u16 &loc, RecordID id){
 	size = get_n(4 * id);
     loc = get_n(4 * id + 2);
 }
+
+// Heap File section
+
 
 
 // Allocate a new block for the database file.
