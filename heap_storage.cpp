@@ -41,10 +41,31 @@ RecordID SlottedPage::add(const Dbt* data) {
 }
 
 void SlottedPage::put(RecordID record_id, const Dbt & data) {
+    u16 location, size;
+    u16 data_size = (u16)data.get_size();
+	get_header(size, location, record_id);
+	
+	if (data_size < size) {
+        memcpy(this->address(location), data.get_data(), data_size);
+		slide(location + data_size, location + size);
+	}
+	else {
+		if (!has_room(data_size - size))
+			throw DbBlockNoRoomError("No room to replace the record with the given data");
+		slide(location, location - (data_size - size));
+		memcpy(this->address(location - (data_size - size)), data.get_data(), data_size);
+	}
 
+	get_header(size, location, record_id);
+	put_header(record_id, data_size, location);
 }
 
-void SlottedPage::del(RecordID record_id) {}
+void SlottedPage::del(RecordID record_id) {
+    u16 location, size;
+	get_header(size, location, record_id);
+	put_header(record_id, 0, 0);
+	slide(location, location + size);
+}
 
 bool SlottedPage::has_room(u16 size)  {
     u16 free_space = this->end_free - (u16)(4 * (this->num_records + 1));
@@ -52,7 +73,32 @@ bool SlottedPage::has_room(u16 size)  {
 }
 
 void SlottedPage::slide(u16 start, u16 end) {
-    
+	int move = end - start;
+	if (move == 0)
+		return;
+
+    int bytes = start - (this->end_free + 1U);
+    char temp_copy[bytes];
+	void* to = this->address((u16)(this->end_free + 1 + move));
+	void* from = this->address((u16)(this->end_free + 1));
+
+	memcpy(temp_copy, from, bytes);
+	memcpy(to, temp_copy, bytes);
+
+	RecordIDs * rec_ids = ids();
+	for (auto const& rec_id : *rec_ids) {
+		u16 location, size;
+		get_header(size, location, rec_id);
+
+		if (location <= start) {
+			location = location + move;
+			put_header(rec_id, size, location);
+		}
+	}
+	delete rec_ids;
+
+	this->end_free += move;
+	put_header();
 }
 
 Dbt* SlottedPage::get(RecordID record_id){
