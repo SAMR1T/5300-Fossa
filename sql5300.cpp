@@ -17,6 +17,11 @@
 using namespace std;
 using namespace hsql;
 
+/*
+ * we allocate and initialize the _DB_ENV global
+ */
+DbEnv *_DB_ENV;
+
 //forward declare
 string unparseStatement(const SQLStatement *statement);
 string unparseCreate(const CreateStatement *statement);
@@ -259,17 +264,23 @@ string getcolumnDefinitionString(const ColumnDefinition *col) {
  */
 int main (int argc, char *argv[])
 {
+    // Open/create the db enviroment
     if (argc != 2) {
-      cerr << "Usage: ./sql5300 dbenvpath" << endl;
-      return EXIT_FAILURE;
+        cerr << "Usage: cpsc5300: dbenvpath" << endl;
+        return 1;
     }
     char *envHome = argv[1];
-    cout << "(sql5300: Running with database environment at " << envHome << ")" << endl;
-
+    cout << "(sql5300: running with database environment at " << envHome << ")" << endl;
     DbEnv env(0U);
-    env.set_message_stream(&std::cout);
-    env.set_error_stream(&std::cerr);
-    env.open(envHome, DB_CREATE | DB_INIT_MPOOL, 0);
+    env.set_message_stream(&cout);
+    env.set_error_stream(&cerr);
+    try {
+        env.open(envHome, DB_CREATE | DB_INIT_MPOOL, 0);
+    } catch (DbException &exc) {
+        cerr << "(sql5300: " << exc.what() << ")";
+        exit(1);
+    }
+    _DB_ENV = &env;
 
     while(true)
     {
