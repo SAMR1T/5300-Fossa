@@ -24,5 +24,12 @@ SELECT * FROM foo LEFT JOIN goober ON foo.x = goober.x
 
 1) Run make
 
-2) Run sql5300 ~/sql5300/data (Note: Here data is the subdirectory to hold our Berkeley DB database files)
+2) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files)
 
+**How to run heap storage test?**
+
+1) Run make
+
+2) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files)
+
+3) Type test and then hit enter
