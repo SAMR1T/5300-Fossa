@@ -305,9 +305,8 @@ void HeapFile::db_open(uint flags) {
 //**********HeapTable Implementation****************************
 
 //HeapTable Class
-
-HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
-  : DbRelation(table_name, column_names, column_attributes), file(table_name) {
+HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) :
+	DbRelation(table_name, column_names, column_attributes), file(table_name) {
 }
                                                                                                
                                                                      
@@ -316,7 +315,6 @@ HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttr
  * @param None
  * @return None
  */
-
 void HeapTable::create(){
   cout << "create" << endl;
   this->file.create();
@@ -327,7 +325,6 @@ void HeapTable::create(){
  * @param None
  * @return None
  */
-
 void HeapTable::create_if_not_exists() {
   try {
     this->open();
@@ -341,7 +338,6 @@ void HeapTable::create_if_not_exists() {
  * @param None
  * @return None
  */
-
 void HeapTable::drop() {
   this->file.drop();
 }
@@ -351,7 +347,6 @@ void HeapTable::drop() {
  * @param None
  * @return None
  */
-
 void HeapTable::open() {
   this->file.open();
 }
@@ -361,7 +356,6 @@ void HeapTable::open() {
  * @param None
  * @return None
  */
-
 void HeapTable::close() {
   this->file.close();
 }
@@ -371,7 +365,6 @@ void HeapTable::close() {
  * @param row to append
  * @retrun handle that returns table with appended row
  */
-
 Handle HeapTable::insert(const ValueDict *row){
   this->open();
   return this->append(this->validate(row));
@@ -382,7 +375,6 @@ Handle HeapTable::insert(const ValueDict *row){
  * @param Handle to table to update, value to update with
  * @return None
  */
-  
 void HeapTable::update(const Handle handle, const ValueDict *new_values) {
   cout << "Don't need to implement yet" << endl;
 }
@@ -392,7 +384,6 @@ void HeapTable::update(const Handle handle, const ValueDict *new_values) {
  * @param Handle that returns 
  * @return None
  */
-
 void HeapTable::del(const Handle handle) {
   cout << "Don't need to implement yet" << endl;
 }
@@ -405,7 +396,6 @@ void HeapTable::del(const Handle handle) {
  * id's to every record in the table 
  *
  */
-
 Handles* HeapTable::select() {
 
   //Vector that holds the Handle vector that holds a pair
@@ -521,8 +511,40 @@ Handle HeapTable::append(const ValueDict *row) {
   
 }
 
-//still need to setup marshal....
+// return the bits to go into the file
+// caller responsible for freeing the returned Dbt and its enclosed ret->get_data().
+Dbt* HeapTable::marshal(const ValueDict* row) {
+    char *bytes = new char[DbBlock::BLOCK_SZ]; // more than we need (we insist that one row fits into DbBlock::BLOCK_SZ)
+    uint offset = 0;
+    uint col_num = 0;
+    for (auto const& column_name: this->column_names) {
+        ColumnAttribute ca = this->column_attributes[col_num++];
+        ValueDict::const_iterator column = row->find(column_name);
+        Value value = column->second;
+        if (ca.get_data_type() == ColumnAttribute::DataType::INT) {
+            *(int32_t*) (bytes + offset) = value.n;
+            offset += sizeof(int32_t);
+        } else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) {
+            uint size = value.s.length();
+            *(u16*) (bytes + offset) = size;
+            offset += sizeof(u16);
+            memcpy(bytes+offset, value.s.c_str(), size); // assume ascii for now
+            offset += size;
+        } else {
+            throw DbRelationError("Only know how to marshal INT and TEXT");
+        }
+    }
+    char *right_size_bytes = new char[offset];
+    memcpy(right_size_bytes, bytes, offset);
+    delete[] bytes;
+    Dbt *data = new Dbt(right_size_bytes, offset);
+    return data;
+}
 
+ValueDict* HeapTable::unmarshal(Dbt *data) {
+    //FIXME: implement
+    return NULL;
+}
 
 
 
