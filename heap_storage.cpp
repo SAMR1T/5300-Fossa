@@ -6,7 +6,18 @@
  *
  * @author Thomas ficca and Sonali d'souza
  * @see "Seattle University, CPSC4300/5300, Spring 2020"
+ *
+ *
+ * for this heap storage engine, the Berkley DB  code is
+ * made up of three layers: DbBlock, DbFile, and DbRelation
+ * with DbBlock being the lowest.
+ *
+ * our concrete implementation or interface classes will be:
+ * SlottedPage, Heapfile, and HeapTable with SlottedPage
+ * being the lowest.
+ *
  */
+
 #include "heap_storage.h"
 #include <utility>
 #include <vector>
@@ -17,6 +28,8 @@
 using namespace std;
 
 typedef u_int16_t u16;
+
+
 
 SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new) : DbBlock(block, block_id, is_new) {
     if (is_new) {
@@ -48,7 +61,8 @@ RecordID SlottedPage::add(const Dbt* data) {
 
 /**
  * Replace a existing record with given data 
- * @param data the Dbt object 
+ * @param data the Dbt object
+ * @return None
  **/
 void SlottedPage::put(RecordID record_id, const Dbt & data) {
   u16 location, size;
@@ -73,6 +87,7 @@ void SlottedPage::put(RecordID record_id, const Dbt & data) {
 /**
  * Delete a record with given record_id
  * @param record_id of the record that needs to be deleted
+ * @return None
  **/
 void SlottedPage::del(RecordID record_id) {
   u16 location, size;
@@ -84,6 +99,7 @@ void SlottedPage::del(RecordID record_id) {
 /**
  * Check if there is enough room for given size
  * @param size to be checked
+ * @return returns a bool
  **/
 bool SlottedPage::has_room(u16 size)  {
   u16 free_space = this->end_free - (u16)(4 * (this->num_records + 1));
@@ -94,6 +110,7 @@ bool SlottedPage::has_room(u16 size)  {
  * Slide data
  * @param start
  * @param end
+ * @return None
  **/
 void SlottedPage::slide(u16 start, u16 end) {
 	int move = end - start;
@@ -127,6 +144,7 @@ void SlottedPage::slide(u16 start, u16 end) {
 /**
  * Get record with given record id
  * @param record_id
+ * @return a pointer to a new Dbt or a nullptr
  **/
 Dbt* SlottedPage::get(RecordID record_id){
   u16 size, location;
@@ -138,6 +156,8 @@ Dbt* SlottedPage::get(RecordID record_id){
 
 /**
  * Get all the record ids
+ * @param void
+ * @return a pointer
  **/
 RecordIDs* SlottedPage::ids(void){
     RecordIDs *recordIds = new RecordIDs();
@@ -149,24 +169,43 @@ RecordIDs* SlottedPage::ids(void){
     return recordIds;
 }
 
-// Get 2-byte integer at given offset in block.
+/*
+ * Get 2-byte integer at given offset in block. 
+ * @param integer
+ * @return an integer
+ */
 u16 SlottedPage::get_n(u16 offset) {
     return *(u16*)this->address(offset);
 }
 
-// Put a 2-byte integer at given offset in block.
+/*
+ * Put a 2-byte integer at given offset in block.
+ * @param 2 integers
+ * @return None
+ */
 void SlottedPage::put_n(u16 offset, u16 n) {
     *(u16*)this->address(offset) = n;
 }
 
-// Make a void* pointer for a given offset into the data block.
+/*
+ * Make a void* pointer for a given offset into the data block.
+ * @param intger
+ * @return void pointer
+ */
+ 
 void* SlottedPage::address(u16 offset) {
     return (void*)((char*)this->block.get_data() + offset);
 }
 
-// Store the size and offset for given id. For id of zero, store the block header.
+/*
+ * Store the size and offset for given id. For id of zero, store
+ * the block header.
+ * @pararm a real id or zero, a size, and loc
+ * @return None
+ */ 
 void SlottedPage::put_header(RecordID id, u16 size, u16 loc) {
-    if (id == 0) { // called the put_header() version and using the default params
+//called the put_header() version and using the default params  
+    if (id == 0) { 
         size = this->num_records;
         loc = this->end_free;
     }
@@ -174,18 +213,25 @@ void SlottedPage::put_header(RecordID id, u16 size, u16 loc) {
     put_n(4*id + 2, loc);
 }
 
-void SlottedPage::get_header( u16 &size, u16 &loc, RecordID id){
+/*
+ * Get header for a given size, loc, and id
+ * @param 2 integers and a recordID
+ * @return None
+ */
+ void SlottedPage::get_header( u16 &size, u16 &loc, RecordID id){
 	size = get_n(4 * id);
     loc = get_n(4 * id + 2);
-}
+ }
 
 
+//***************HeapFile Implementation ********************************
 
 // Heap File Class
 
 HeapFile::HeapFile(string name) : DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0) {
 	this->dbfilename = this->name + ".db";
 }
+
 /**
  * Create a physical file
  * @param none
@@ -375,7 +421,7 @@ Handle HeapTable::insert(const ValueDict *row){
 }
 
 /*
- * Update a row in the table
+ * Update a row in the table - NEEDS TO BE DONE
  * @param Handle to table to update, value to update with
  * @return None
  */
@@ -384,7 +430,7 @@ void HeapTable::update(const Handle handle, const ValueDict *new_values) {
 }
 
 /*
- * Delete 
+ * Delete - NEEDS TO BE DONE
  * @param Handle that returns 
  * @return None
  */
@@ -532,10 +578,17 @@ Handle HeapTable::append(const ValueDict *row) {
   
 }
 
-// return the bits to go into the file
-// caller responsible for freeing the returned Dbt and its enclosed ret->get_data().
+/*
+ * return the bits to go into the file, caller is responsible
+ * for freeing the returned Dbt and its enclosed ret->get_data().
+ * @param a row to marshal
+ * @return a Dbt structure
+ */
+ 
 Dbt* HeapTable::marshal(const ValueDict *row) {
-    char *bytes = new char[DbBlock::BLOCK_SZ]; // more than we need (we insist that one row fits into DbBlock::BLOCK_SZ)
+  //more than we need ( we insist that one row fits into
+  //DbBlock::BLOCK_SZ
+    char *bytes = new char[DbBlock::BLOCK_SZ];
     uint offset = 0;
     uint col_num = 0;
     for (auto const& column_name: this->column_names) {
@@ -549,7 +602,8 @@ Dbt* HeapTable::marshal(const ValueDict *row) {
             uint size = value.s.length();
             *(u16*) (bytes + offset) = size;
             offset += sizeof(u16);
-            memcpy(bytes+offset, value.s.c_str(), size); // assume ascii for now
+            //assume ascii for now
+            memcpy(bytes+offset, value.s.c_str(), size);  
             offset += size;
         } else {
             throw DbRelationError("Only know how to marshal INT and TEXT");
@@ -562,8 +616,13 @@ Dbt* HeapTable::marshal(const ValueDict *row) {
     return data;
 }
 
+/*
+ * reverse the marshaling process done above
+ * @param a Dbt structure
+ * @return a ValueDict
+ */
 ValueDict* HeapTable::unmarshal(Dbt * data) {
-  //Reverse the marshalling procedure done above
+     
 	char* bytes = (char*)data->get_data();
 	uint offset = 0;
 	uint col_num = 0;
@@ -614,7 +673,10 @@ bool assertion_failure(string message) {
 
 /**
  * Testing function for SlottedPage.
- * @return true if testing succeeded, false otherwise */
+ * @param None
+ * @return true if testing succeeded, false otherwise
+ *
+ */
 bool test_slotted_page() {
     // construct one
     char blank_space[DbBlock::BLOCK_SZ];
@@ -707,10 +769,16 @@ bool test_slotted_page() {
 }
 
 
-// test function -- returns true if all tests pass
+/*
+ * test heap_storage function
+ * @param simply enter "test" on the SQl prompt
+ * @return function returns true if all test pass
+ */
 bool test_heap_storage() {
+
   //test SlottedPage
   test_slotted_page();
+    
 
 	ColumnNames column_names;
 	column_names.push_back("a");
