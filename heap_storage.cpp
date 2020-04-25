@@ -1,6 +1,6 @@
 /**
  * heap_storage.cpp - contains:
- * SlottedPage, HeapFile
+ * SlottedPage, HeapFile, and HeapTable
  *
  * @author Thomas ficca and Sonali d'souza
  * @see "Seattle University, CPSC4300/5300, Spring 2020"
@@ -298,7 +298,75 @@ void HeapFile::db_open(uint flags) {
 	this->closed = false;
 }
 
+//**********HeapTable Implementation***************
 
+//HeapTable Class
+
+HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
+  : DbRelation(table_name, column_names, column_attributes), file(table_name) {
+}
+                                                                                               
+                                                                     
+/*                                                                     
+ * Create a new HeapTable                                                         
+ * @param None
+ * @return None
+ */
+
+void HeapTable::create(){
+  cout << "create" << endl;
+  this->file.create();
+}
+
+/*
+ * Create a new file if it does not exist 
+ * @param None
+ * @return None
+ */
+
+void HeapTable::create_if_not_exists() {
+  try {
+    this->open();
+  } catch (DbException &e){
+    this->file.create();
+  }
+  
+}
+
+/*
+ * Drop the file/table
+ * @param None
+ * @return None
+ */
+
+void HeapTable::drop() {
+  this->file.drop();
+
+}
+
+/*
+ * Open the file/table 
+ * @param None
+ * @return None
+ */
+
+void HeapTable::open() {
+  this->file.open();
+}
+
+/*
+ * Close the underlying file/table
+ * @param None
+ * @return None
+ */
+
+void HeapTable::close() {
+  this->file.close();
+}
+
+  
+ 
+ 
 // test function -- returns true if all tests pass
 bool test_heap_storage() {
 	ColumnNames column_names;
