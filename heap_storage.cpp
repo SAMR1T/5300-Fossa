@@ -574,10 +574,12 @@ ValueDict* HeapTable::unmarshal(Dbt * data) {
 
 	for (auto const& column_name : this->column_names) {
 		ColumnAttribute ca = this->column_attributes[col_num++];
-		
+		value.data_type = ca.get_data_type();
+
 		if (ca.get_data_type() == ColumnAttribute::DataType::INT) {
 			value.n = *(int32_t*)(bytes + offset);
 			offset += sizeof(int32_t);
+      row->insert(make_pair(column_name,value.n));
 		}
 		else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) {
 			u16 size = *(u16*)(bytes + offset);
@@ -589,13 +591,12 @@ ValueDict* HeapTable::unmarshal(Dbt * data) {
 
 			value.s = string(text);  
 			offset += size;
+      row->insert(make_pair(column_name,value.s));
 		}
 		else {
 			throw DbRelationError("Only know how to unmarshal INT and TEXT");
 		}
 
-    value.data_type = ca.get_data_type();
-		(*row)[column_name] = value;
 	}
 
 	return row;
