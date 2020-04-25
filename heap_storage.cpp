@@ -2,6 +2,8 @@
  * heap_storage.cpp - contains:
  * SlottedPage, HeapFile, and HeapTable
  *
+ * test function at bottom of file
+ *
  * @author Thomas ficca and Sonali d'souza
  * @see "Seattle University, CPSC4300/5300, Spring 2020"
  */
@@ -177,6 +179,8 @@ void SlottedPage::get_header( u16 &size, u16 &loc, RecordID id){
     loc = get_n(4 * id + 2);
 }
 
+//*************HeapFile Implementation********************************
+
 // Heap File Class
 
 /**
@@ -298,7 +302,7 @@ void HeapFile::db_open(uint flags) {
 	this->closed = false;
 }
 
-//**********HeapTable Implementation***************
+//**********HeapTable Implementation****************************
 
 //HeapTable Class
 
@@ -330,7 +334,6 @@ void HeapTable::create_if_not_exists() {
   } catch (DbException &e){
     this->file.create();
   }
-  
 }
 
 /*
@@ -341,7 +344,6 @@ void HeapTable::create_if_not_exists() {
 
 void HeapTable::drop() {
   this->file.drop();
-
 }
 
 /*
@@ -364,9 +366,166 @@ void HeapTable::close() {
   this->file.close();
 }
 
+/*  
+ * Insert a row into table
+ * @param row to append
+ * @retrun handle that returns table with appended row
+ */
+
+Handle HeapTable::insert(const ValueDict *row){
+  this->open();
+  return this->append(this->validate(row));
+}
+
+/*
+ * Update a row in the table
+ * @param Handle to table to update, value to update with
+ * @return None
+ */
   
- 
- 
+void HeapTable::update(const Handle handle, const ValueDict *new_values) {
+  cout << "Don't need to implement yet" << endl;
+}
+
+/*
+ * Delete 
+ * @param Handle that returns 
+ * @return None
+ */
+
+void HeapTable::del(const Handle handle) {
+  cout << "Don't need to implement yet" << endl;
+}
+
+
+/*
+ * Loop through all the blocks in the file
+ * @param row that will be appended to the table
+ * @retrun Handle that has all the block and record
+ * id's to every record in the table 
+ *
+ */
+
+Handles* HeapTable::select() {
+
+  //Vector that holds the Handle vector that holds a pair
+  Handles* handles = new Handles();
+
+  BlockIDs* block_ids = file.block_ids();
+  for (auto const& block_id: *block_ids){
+    SlottedPage* block = file.get(block_id);
+    RecordIDs* record_ids = block->ids();
+    for (auto const& record_id: *record_ids)
+      handles->push_back(Handle(block_id, record_id));
+    delete record_ids;
+    delete block;
+  }
+  delete block_ids;
+  return handles;
+}
+
+Handles* HeapTable::select(const ValueDict *where) {
+  Handles* handles = new Handles();
+  BlockIDs* block_ids = file.block_ids();
+  for (auto const& block_id: *block_ids) {
+    SlottedPage* block = file.get(block_id);
+    RecordIDs* record_ids = block->ids();
+    for (auto const& record_id: *record_ids)
+      handles->push_back(Handle(block_id, record_id));
+    delete record_ids;
+    delete block;
+  }
+  delete block_ids;
+  return handles;
+    
+}
+
+/*
+ * Project ( Insert ) a row into the table
+ * @param Handle that holds block id and record id to get every record
+ * @return ValueDict for the rows specified by the columns 
+ */
+
+ValueDict* HeapTable:: project(Handle handle) {
+  BlockID block_id = handle.first;
+  RecordID record_id = handle.second;
+  SlottedPage* block = file.get(block_id);
+  Dbt* data = block->get(record_id);
+  ValueDict* row = unmarshal(data);
+
+  delete data;
+  return row;
+}
+
+
+ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names){
+  cout << "Don't need to implement yet!" << endl;
+  return NULL;
+}
+
+/*
+ * Verify that all the columns are there and fill in any missing values
+ * @param row that will be appended to the table
+ * @return ValueDict which has row that will be appnded to the table
+ *
+ */
+
+ValueDict* HeapTable::validate(const ValueDict *row){
+
+  ValueDict* full_row = new ValueDict();
+  for (auto const& column_name: this->column_names){
+    ValueDict::const_iterator column = row->find(column_name);//column is the iterator
+    Value value;
+
+    if (column ==row->end()) {
+      throw DbRelationError("don't know how to handle NULLS, defaults,etc...yet");
+    }else{
+      //column->second refers to Value in std::map<Identifier, Value> ValueDict
+      value = column->second;
+    }
+
+    //insert the pair which has an identifier of the column, and the value it
+    //refers to the full_row.
+    full_row->insert(make_pair(column_name, value));
+  }
+  return full_row;
+}
+
+/*
+ * Append a row to the table
+ * @param row that will be appended to the table
+ * @return  Handle that returns a pair of the last
+ * block added and the record id from inserting it
+ */
+
+Handle HeapTable::append(const ValueDict *row) {
+  Dbt *data = this->marshal(row);
+  SlottedPage *block = this->file.get(this->file.get_last_block_id());
+  RecordID record_id;
+  try {
+    record_id = block->add(data); //try to add the row to the slottedPage
+  } catch (...) {
+    //block was full so create a new one
+
+    //grabs a new block
+    block = this->file.get_new();
+    //and add the row to the new block and get its record
+    record_id = block->add(data);
+  }
+  this->file.put(block);//put the block in the databases file
+  delete data;
+  delete block;
+  //retrun id of block and record id from inserting into
+  //slottedpage as a pair
+  return Handle(this->file.get_last_block_id(), record_id);
+  
+}
+
+//still need to setup marshal....
+
+
+
+
 // test function -- returns true if all tests pass
 bool test_heap_storage() {
 	ColumnNames column_names;
