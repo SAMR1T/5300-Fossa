@@ -51,12 +51,12 @@ RecordID SlottedPage::add(const Dbt* data) {
  * @param data the Dbt object 
  **/
 void SlottedPage::put(RecordID record_id, const Dbt & data) {
-    u16 location, size;
-    u16 data_size = (u16)data.get_size();
+  u16 location, size;
+  u16 data_size = (u16)data.get_size();
 	get_header(size, location, record_id);
 	
 	if (data_size < size) {
-        memcpy(this->address(location), data.get_data(), data_size);
+    memcpy(this->address(location), data.get_data(), data_size);
 		slide(location + data_size, location + size);
 	}
 	else {
@@ -75,7 +75,7 @@ void SlottedPage::put(RecordID record_id, const Dbt & data) {
  * @param record_id of the record that needs to be deleted
  **/
 void SlottedPage::del(RecordID record_id) {
-    u16 location, size;
+  u16 location, size;
 	get_header(size, location, record_id);
 	put_header(record_id, 0, 0);
 	slide(location, location + size);
@@ -86,7 +86,7 @@ void SlottedPage::del(RecordID record_id) {
  * @param size to be checked
  **/
 bool SlottedPage::has_room(u16 size)  {
-    u16 free_space = this->end_free - (u16)(4 * (this->num_records + 1));
+  u16 free_space = this->end_free - (u16)(4 * (this->num_records + 1));
 	return size <= free_space;
 }
 
@@ -100,8 +100,8 @@ void SlottedPage::slide(u16 start, u16 end) {
 	if (move == 0)
 		return;
 
-    int bytes = start - (this->end_free + 1U);
-    char temp_copy[bytes];
+  int bytes = start - (this->end_free + 1U);
+  char temp_copy[bytes];
 	void* to = this->address((u16)(this->end_free + 1 + move));
 	void* from = this->address((u16)(this->end_free + 1));
 
@@ -129,7 +129,7 @@ void SlottedPage::slide(u16 start, u16 end) {
  * @param record_id
  **/
 Dbt* SlottedPage::get(RecordID record_id){
-    u16 size, location;
+  u16 size, location;
 	get_header(size, location, record_id);
 	if (location == 0)
 		return nullptr; 
@@ -179,17 +179,20 @@ void SlottedPage::get_header( u16 &size, u16 &loc, RecordID id){
     loc = get_n(4 * id + 2);
 }
 
-//*************HeapFile Implementation********************************
+
 
 // Heap File Class
 
+HeapFile::HeapFile(string name) : DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0) {
+	this->dbfilename = this->name + ".db";
+}
 /**
  * Create a physical file
  * @param none
  * @return None
  **/
 void HeapFile::create(void) {
-	db_open(DB_CREATE | DB_EXCL);
+  db_open(DB_CREATE | DB_EXCL);
 	SlottedPage * slotted_page = get_new();
 	delete slotted_page;
 }
@@ -290,17 +293,18 @@ void HeapFile::db_open(uint flags) {
 		return;
 
 	this->db.set_re_len(DbBlock::BLOCK_SZ); 
-	this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0);
+	this->db.open(NULL, this->dbfilename.c_str(), NULL, DB_RECNO, flags, 0);
 
 	if (flags) {
 		this->last = 0;
 	} else {
-		DB_BTREE_STAT* stat;
+		  DB_BTREE_STAT* stat;
 	    this->db.stat(nullptr, &stat, DB_FAST_STAT);
-		this->last = stat->bt_ndata;
+		  this->last = stat->bt_ndata;
 	}
 
 	this->closed = false;
+
 }
 
 //**********HeapTable Implementation****************************
@@ -317,8 +321,7 @@ HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttr
  * @return None
  */
 void HeapTable::create(){
-  cout << "create" << endl;
-  this->file.create();
+  file.create();
 }
 
 /*
@@ -328,9 +331,9 @@ void HeapTable::create(){
  */
 void HeapTable::create_if_not_exists() {
   try {
-    this->open();
-  } catch (DbException &e){
-    this->file.create();
+    open();
+  } catch (DbException &e) {
+    file.create();
   }
 }
 
@@ -340,7 +343,7 @@ void HeapTable::create_if_not_exists() {
  * @return None
  */
 void HeapTable::drop() {
-  this->file.drop();
+  file.drop();
 }
 
 /*
@@ -349,7 +352,7 @@ void HeapTable::drop() {
  * @return None
  */
 void HeapTable::open() {
-  this->file.open();
+  file.open();
 }
 
 /*
@@ -358,7 +361,7 @@ void HeapTable::open() {
  * @return None
  */
 void HeapTable::close() {
-  this->file.close();
+  file.close();
 }
 
 /*  
@@ -377,7 +380,7 @@ Handle HeapTable::insert(const ValueDict *row){
  * @return None
  */
 void HeapTable::update(const Handle handle, const ValueDict *new_values) {
-  cout << "Don't need to implement yet" << endl;
+  cout << "Not yet implemented" << endl;
 }
 
 /*
@@ -386,7 +389,7 @@ void HeapTable::update(const Handle handle, const ValueDict *new_values) {
  * @return None
  */
 void HeapTable::del(const Handle handle) {
-  cout << "Don't need to implement yet" << endl;
+  cout << "Not yet implemented" << endl;
 }
 
 
@@ -436,23 +439,40 @@ Handles* HeapTable::select(const ValueDict *where) {
  * @param Handle that holds block id and record id to get every record
  * @return ValueDict for the rows specified by the columns 
  */
-
-ValueDict* HeapTable:: project(Handle handle) {
-  BlockID block_id = handle.first;
-  RecordID record_id = handle.second;
-  SlottedPage* block = file.get(block_id);
-  Dbt* data = block->get(record_id);
-  ValueDict* row = unmarshal(data);
-
-  delete data;
-  return row;
+ValueDict* HeapTable::project(Handle handle) {
+	return project(handle, &this->column_names);
 }
 
+/*
+ * Return values for the handle
+ * @param Handle that holds block id and record id to get every record
+ * @return ValueDict for the rows specified by the columns 
+ */
+ValueDict* HeapTable::project(Handle handle, const ColumnNames * column_names) {
+	BlockID block_id = handle.first;
+	RecordID record_id = handle.second;
+	SlottedPage* block = file.get(block_id);
+	Dbt* data = block->get(record_id);
+	ValueDict* row = unmarshal(data);
+	delete data;
+	delete block;
 
-ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names){
-  cout << "Don't need to implement yet!" << endl;
-  return NULL;
+	if (column_names->empty())
+		return row;
+
+	ValueDict* values = new ValueDict();
+	for (auto const& column_name : * column_names) {
+     ValueDict::const_iterator column = row->find(column_name);
+		if (column == row->end())
+			throw DbRelationError("No column with column name " + column_name);
+
+		(*values)[column_name] = (*row)[column_name];
+	}
+
+	delete row;
+	return values;
 }
+
 
 /*
  * Verify that all the columns are there and fill in any missing values
@@ -514,7 +534,7 @@ Handle HeapTable::append(const ValueDict *row) {
 
 // return the bits to go into the file
 // caller responsible for freeing the returned Dbt and its enclosed ret->get_data().
-Dbt* HeapTable::marshal(const ValueDict* row) {
+Dbt* HeapTable::marshal(const ValueDict *row) {
     char *bytes = new char[DbBlock::BLOCK_SZ]; // more than we need (we insist that one row fits into DbBlock::BLOCK_SZ)
     uint offset = 0;
     uint col_num = 0;
@@ -542,15 +562,59 @@ Dbt* HeapTable::marshal(const ValueDict* row) {
     return data;
 }
 
-ValueDict* HeapTable::unmarshal(Dbt *data) {
-    //FIXME: implement
-    return NULL;
-}
+ValueDict* HeapTable::unmarshal(Dbt * data) {
+  //Reverse the marshalling procedure done above
+	char* bytes = (char*)data->get_data();
+	uint offset = 0;
+	uint col_num = 0;
 
+  
+  ValueDict* row = new ValueDict();
+  Value value;
+
+	for (auto const& column_name : this->column_names) {
+		ColumnAttribute ca = this->column_attributes[col_num++];
+		
+		if (ca.get_data_type() == ColumnAttribute::DataType::INT) {
+			value.n = *(int32_t*)(bytes + offset);
+			offset += sizeof(int32_t);
+		}
+		else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) {
+			u16 size = *(u16*)(bytes + offset);
+			offset += sizeof(u16);
+
+			char text[DbBlock::BLOCK_SZ];
+			memcpy(text, bytes + offset, size);
+			text[size] = '\0';
+
+			value.s = string(text);  
+			offset += size;
+		}
+		else {
+			throw DbRelationError("Only know how to unmarshal INT and TEXT");
+		}
+
+    value.data_type = ca.get_data_type();
+		(*row)[column_name] = value;
+	}
+
+	return row;
+}
 
 
 // test function -- returns true if all tests pass
 bool test_heap_storage() {
+  //test SlottedPage
+  char block[DbBlock::BLOCK_SZ];
+  Dbt dbtblock(block, DbBlock::BLOCK_SZ);
+  SlottedPage page(dbtblock, 1, true);
+  char testword[] = "HelloWorld";
+  Dbt dbtRec1(testword, sizeof(testword));
+  page.add(&dbtRec1);
+  Dbt* retrvrec = page.get(1);
+  cout << retrvrec->get_size() << endl;
+  cout << (char*)retrvrec->get_data() << endl;
+
 	ColumnNames column_names;
 	column_names.push_back("a");
 	column_names.push_back("b");
