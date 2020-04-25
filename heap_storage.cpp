@@ -1,5 +1,5 @@
 /**
- * heap_storage.cpp - contains implementation of:
+ * heap_storage.cpp - contains:
  * SlottedPage, HeapFile
  *
  * @author Thomas ficca and Sonali d'souza
@@ -285,7 +285,7 @@ void HeapFile::db_open(uint flags) {
 		return;
 
 	this->db.set_re_len(DbBlock::BLOCK_SZ); 
-	this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
+	this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0);
 
 	if (flags) {
 		this->last = 0;
