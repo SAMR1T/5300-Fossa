@@ -177,26 +177,127 @@ void SlottedPage::get_header( u16 &size, u16 &loc, RecordID id){
     loc = get_n(4 * id + 2);
 }
 
-// Heap File section
+// Heap File Class
 
-
-
-// Allocate a new block for the database file.
-// Returns the new empty DbBlock that is managing the records in this block and its block id.
-SlottedPage* HeapFile::get_new(void) {
-    char block[SlottedPage::BLOCK_SZ];
-    memset(block, 0, sizeof(block));
-    Dbt data(block, sizeof(block));
-
-    int block_id = ++this->last;
-    Dbt key(&block_id, sizeof(block_id));
-
-    // write out an empty block and read it back in so Berkeley DB is managing the memory
-    SlottedPage* page = new SlottedPage(data, this->last, true);
-    this->db.put(nullptr, &key, &data, 0); // write it out with initialization applied
-    this->db.get(nullptr, &key, &data, 0);
-    return page;
+/**
+ * Create a physical file
+ * @param none
+ * @return None
+ **/
+void HeapFile::create(void) {
+	db_open(DB_CREATE | DB_EXCL);
+	SlottedPage * slotted_page = get_new();
+	delete slotted_page;
 }
+
+/**
+ * Delete the physical file.
+ * @param none
+ * @return None
+ **/
+void HeapFile::drop(void) {
+	close();
+	db.remove(this->dbfilename.c_str(), nullptr, 0);
+}
+
+/**
+ * Open a physical file
+ * @param none
+ * @return None
+ **/
+void HeapFile::open(void) {
+	db_open();
+}
+
+/**
+ * Close a physical file
+ * @param none
+ * @return None
+ **/
+void HeapFile::close(void) {
+	this->db.close(0);
+	this->closed = true;
+}
+
+/**
+ * Allocate a new block for the database file.
+ * @param none
+ * @return Returns the new empty DbBlock that is managing the records in this block and its block id.
+ **/
+SlottedPage* HeapFile::get_new(void) {
+	char block[DbBlock::BLOCK_SZ];
+	memset(block, 0, sizeof(block));
+	Dbt data(block, sizeof(block));
+
+	int block_id = ++this->last;
+	Dbt key(&block_id, sizeof(block_id));
+
+	// write out an empty block and read it back in so Berkeley DB is managing the memory
+	SlottedPage* page = new SlottedPage(data, this->last, true);
+	this->db.put(nullptr, &key, &data, 0); // write it out with initialization done to it
+	delete page;
+	this->db.get(nullptr, &key, &data, 0);
+	return new SlottedPage(data, this->last);
+}
+
+/**
+ * Get block from the database file.
+ * @param none
+ * @return Returns DbBlock and its block id.
+ **/
+SlottedPage* HeapFile::get(BlockID block_id) {
+	Dbt data;
+	Dbt key(&block_id, sizeof(block_id));
+	this->db.get(nullptr, &key, &data, 0);
+	return new SlottedPage(data, block_id, false);
+}
+
+/**
+ * Write block to the database file.
+ * @param none
+ * @return None
+ **/
+void HeapFile::put(DbBlock * block) {
+	int block_id = block->get_block_id();
+	Dbt key(&block_id, sizeof(block_id));
+	this->db.put(nullptr, &key, block->get_block(), 0);
+}
+
+/**
+ * Get all block ids.
+ * @param none
+ * @return None
+ **/
+BlockIDs* HeapFile::block_ids() {
+	BlockIDs* block_ids = new BlockIDs();
+	for (BlockID block_id = 1; block_id <= this->last; block_id++)
+		block_ids->push_back(block_id);
+	return block_ids;
+}
+
+/**
+ * Open berkley db.
+ * @param flags
+ * @return None
+ **/
+void HeapFile::db_open(uint flags) {
+	if (!this->closed)
+		return;
+
+	this->db.set_re_len(DbBlock::BLOCK_SZ); 
+	this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
+
+	if (flags) {
+		this->last = 0;
+	} else {
+		DB_BTREE_STAT* stat;
+	    this->db.stat(nullptr, &stat, DB_FAST_STAT);
+		this->last = stat->bt_ndata;
+	}
+
+	this->closed = false;
+}
+
 
 // test function -- returns true if all tests pass
 bool test_heap_storage() {
