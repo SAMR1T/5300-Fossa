@@ -3,11 +3,19 @@ DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
 **What does this project currently do?**
 
+Milestone 1
 SQL interpreter that currently accepts SQL statements and just returns a string which is the SQL statement string corresponding to the data structure.
+
+Milestone 2 
+At this point, the SQL interpreter now has a rudimentry heap storage engine. We have implemented the basic functions needed for HeapTable, but only for two data types: integer and text.
 
 **What statements this project currently support?**
 
+Milestone 1
 Select and create statements
+
+Milestone 2
+create, create_if_not_exist, open, close, drop, insert( integer, text only), select( ignoring WHERE, GROUP BY and LIMIT), and project
 
 **Example sql statement and output string?**
 
