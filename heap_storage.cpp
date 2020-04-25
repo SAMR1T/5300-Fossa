@@ -70,8 +70,7 @@ void SlottedPage::put(RecordID record_id, const Dbt & data) {
 	if (data_size < size) {
     memcpy(this->address(location), data.get_data(), data_size);
 		slide(location + data_size, location + size);
-	}
-	else {
+	} else {
 		if (!has_room(data_size - size))
 			throw DbBlockNoRoomError("No room to replace the record with the given data");
 		slide(location, location - (data_size - size));
