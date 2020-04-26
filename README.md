@@ -13,10 +13,12 @@ SQL interpreter that currently accepts SQL statements and just returns a string 
 Milestone 2 
 At this point, the SQL interpreter now has a rudimentry heap storage engine. We have implemented the basic functions needed for HeapTable, but only for two data types: integer and text.
 
-**What statements this project currently support?**
+**What statements does this project's SQL interpreter currently support?**
 
 Milestone 1
 Select and create statements
+
+**What basic functions does this project's HeapTable currently support?**
 
 Milestone 2
 create, create_if_not_exist, open, close, drop, insert( integer, text only), select( ignoring WHERE, GROUP BY and LIMIT), and project
@@ -34,14 +36,12 @@ SELECT * FROM foo LEFT JOIN goober ON foo.x = goober.x
 
 **How to run this project?**
 
-1) Run make
+1) Download and open this project directory
 
-2) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files)
+2) Run make
 
-**How to run heap storage test?**
+3) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files. Make sure you create this directory before running this command)
 
-1) Run make
+4) To use sql interpreter, start typing sql commands like the examples shown above.
 
-2) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files)
-
-3) Type test and then hit enter
+5) To test heap storage, type test and hit enter.
