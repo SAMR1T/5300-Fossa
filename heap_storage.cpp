@@ -438,8 +438,7 @@ void HeapTable::del(const Handle handle) {
 
 /*
  * Loop through all the blocks in the file
- * @param row that will be appended to the table
- * @retrun Handle that has all the block and record
+ * @return Handle that has all the block and record
  * id's to every record in the table 
  *
  */
@@ -461,6 +460,14 @@ Handles* HeapTable::select() {
   return handles;
 }
 
+/*
+ * Loop through all the blocks in the file and
+ * return list of handles that satisfy where condition
+ * @return List of Handles that has all the block and record
+ * id's to every record in the table that satisfy given where 
+ * condition
+ *
+ */
 Handles* HeapTable::select(const ValueDict *where) {
   Handles* handles = new Handles();
   BlockIDs* block_ids = file.block_ids();
@@ -523,7 +530,6 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames * column_names) {
  * @return ValueDict which has row that will be appnded to the table
  *
  */
-
 ValueDict* HeapTable::validate(const ValueDict *row){
 
   ValueDict* full_row = new ValueDict();
@@ -551,7 +557,6 @@ ValueDict* HeapTable::validate(const ValueDict *row){
  * @return  Handle that returns a pair of the last
  * block added and the record id from inserting it
  */
-
 Handle HeapTable::append(const ValueDict *row) {
   Dbt *data = this->marshal(row);
   SlottedPage *block = this->file.get(this->file.get_last_block_id());
@@ -581,7 +586,6 @@ Handle HeapTable::append(const ValueDict *row) {
  * @param a row to marshal
  * @return a Dbt structure
  */
- 
 Dbt* HeapTable::marshal(const ValueDict *row) {
   //more than we need ( we insist that one row fits into
   //DbBlock::BLOCK_SZ
