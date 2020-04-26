@@ -1,7 +1,7 @@
 # 5300-Fossa
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
-Verano Sprint Handover video link
+**Verano Sprint Handover video link**
 
 https://seattleu.instructuremedia.com/embed/1ac8f7c4-d8a2-4af0-8154-0a0bb1aac86f
 
