@@ -73,12 +73,11 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
 }
 
 /**
- * Get the column name and type from a given column definition
- * @param col               given column definition
- * @param column_name       name of column to get
- * @param column_attribute  attribute of column to get
- * @throw                   SQLExecError if data type not recognized
- */ 
+ * Pull out column name and attributes from AST's column definition clause
+ * @param col                AST column definition
+ * @param column_name        returned by reference
+ * @param column_attributes  returned by reference
+ */
 void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
 
     column_name = col->name;
@@ -119,19 +118,72 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
         column_attributes.push_back(column_attribute);        
     }
 
-    // add new table info to tables
+    // update _tables and _columns
     ValueDict row; // ValueDict: map<Identifier, Value>
-    row["table_name"] = table_name;
-    Handle handle; // Handle: pair<BlockID, RecordID> 
-    handle = SQLExec::tables->insert(&row); 
+    // handle holder for exception
+    Handle table_handle; // Handle: pair<BlockID, RecordID> 
+    Handle column_handle; 
+    Handles column_handles;
 
+    try {
+        // add new table info to _tables
+        row["table_name"] = table_name;
+        table_handle = SQLExec::tables->insert(&row); 
 
+        // add new columns info to _columns
+        DbRelation &columns = SQLExec::tables->get_table("_columns"); 
+        try {
+            for (uint i = 0; i < column_names.size(); ++i) {
+                row["column_name"] = column_names[i];
+
+                switch(column_attributes[i].get_data_type()) {
+                    case ColumnAttribute::INT:
+                        row["data_type"] = Value("INT");
+                        break;
+                    case ColumnAttribute::TEXT: 
+                        row["data_type"] = Value("TEXT");
+                        break;
+                    default:
+                        throw SQLExecError("data type not implemented");
+                }
+                column_handle = columns.insert(&row);
+                column_handles.push_back(column_handle);
+            }
+
+            // create table file
+            DbRelation &table = SQLExec::tables->get_table(table_name);
+            if (statement->ifNotExists)
+                table.create_if_not_exists();
+            else
+                table.create();
+            cout << table_name << ".db file created" << endl; // DEL
+            
+        } catch (...) {
+            try {
+                // remove added columns
+                for (Handle handle : column_handles)
+                    columns.del(handle);
+            } catch (...) {}
+
+        }
+    } catch (...) {
+        try {
+            // remove added table
+            SQLExec::tables->del(table_handle);
+        } catch (...) {}
+    }
 
     return new QueryResult("created " + table_name);
 }
 
-// DROP ...
+/**
+ * Drop a table with a given statement
+ * @param statement given statement for table removal
+ * @return          query execution result
+ */ 
 QueryResult *SQLExec::drop(const DropStatement *statement) {
+    Identifier table_name = statement->name;
+    cout << "table_name: " << table_name << endl; // DEL
     return new QueryResult("not implemented"); // FIXME
 }
 
