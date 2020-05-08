@@ -46,9 +46,15 @@ QueryResult::~QueryResult() {
     // FIXME
 }
 
-
+/**
+ * Execute SQL statement based on statement type
+ * @param statement SQL statement to execute
+ * @return          query execution result
+ */
 QueryResult *SQLExec::execute(const SQLStatement *statement) {
-    // FIXME: initialize _tables table, if not yet present
+    // initialize _tables table, if not yet present
+    if (SQLExec::tables == nullptr)
+        SQLExec::tables = new Tables();
 
     try {
         switch (statement->type()) {
@@ -66,13 +72,62 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-void
-SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
-    throw SQLExecError("not implemented");  // FIXME
+/**
+ * Get the column name and type from a given column definition
+ * @param col               given column definition
+ * @param column_name       name of column to get
+ * @param column_attribute  attribute of column to get
+ * @throw                   SQLExecError if data type not recognized
+ */ 
+void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
+
+    column_name = col->name;
+    cout << "column_name: " << column_name << endl; // DEL
+
+    switch (col->type) {
+        case ColumnDefinition::INT:
+            column_attribute.set_data_type(ColumnAttribute::INT);
+            cout << "col_type: " << " INT"<< endl; // DEL
+            break;
+        case ColumnDefinition::TEXT:
+            column_attribute.set_data_type(ColumnAttribute::TEXT);
+            cout << "col_type: " << " TEXT" << endl; // DEL
+            break;
+        default:
+            throw SQLExecError("data type not implemented");
+    }
 }
 
+/**
+ * Create a table with a given statement
+ * @param statement given statement for table creation
+ * @return          query execution result
+ */ 
 QueryResult *SQLExec::create(const CreateStatement *statement) {
-    return new QueryResult("not implemented"); // FIXME
+
+    Identifier table_name = statement->tableName;
+    cout << "table_name: " << table_name << endl; // DEL
+
+    Identifier column_name;
+    ColumnNames column_names;
+    ColumnAttribute column_attribute;
+    ColumnAttributes column_attributes;
+
+    for (ColumnDefinition *col : *statement->columns) {
+        column_definition(col, column_name, column_attribute);
+        column_names.push_back(column_name);
+        column_attributes.push_back(column_attribute);        
+    }
+
+    // add new table info to tables
+    ValueDict row; // ValueDict: map<Identifier, Value>
+    row["table_name"] = table_name;
+    Handle handle; // Handle: pair<BlockID, RecordID> 
+    handle = SQLExec::tables->insert(&row); 
+
+
+
+    return new QueryResult("created " + table_name);
 }
 
 // DROP ...
