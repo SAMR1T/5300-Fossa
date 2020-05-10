@@ -81,16 +81,13 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
 void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
 
     column_name = col->name;
-    cout << "column_name: " << column_name << endl; // DEL
 
     switch (col->type) {
         case ColumnDefinition::INT:
             column_attribute.set_data_type(ColumnAttribute::INT);
-            cout << "col_type: " << " INT"<< endl; // DEL
             break;
         case ColumnDefinition::TEXT:
             column_attribute.set_data_type(ColumnAttribute::TEXT);
-            cout << "col_type: " << " TEXT" << endl; // DEL
             break;
         default:
             throw SQLExecError("data type not implemented");
@@ -105,8 +102,6 @@ void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_
 QueryResult *SQLExec::create(const CreateStatement *statement) {
 
     Identifier table_name = statement->tableName;
-    cout << "table_name: " << table_name << endl; // DEL
-
     Identifier column_name;
     ColumnNames column_names;
     ColumnAttribute column_attribute;
@@ -156,7 +151,6 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
                 table.create_if_not_exists();
             else
                 table.create();
-            cout << table_name << ".db file created" << endl; // DEL
             
         } catch (...) {
             try {
@@ -164,13 +158,13 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
                 for (Handle handle : column_handles)
                     columns.del(handle);
             } catch (...) {}
-
         }
     } catch (...) {
         try {
             // remove added table
             SQLExec::tables->del(table_handle);
         } catch (...) {}
+        throw SQLExecError("table creation failed");
     }
 
     return new QueryResult("created " + table_name);
@@ -183,8 +177,35 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
  */ 
 QueryResult *SQLExec::drop(const DropStatement *statement) {
     Identifier table_name = statement->name;
-    cout << "table_name: " << table_name << endl; // DEL
-    return new QueryResult("not implemented"); // FIXME
+    ValueDict row;
+    row["table_name"] = Value(table_name);
+    
+    DbRelation &table = SQLExec::tables->get_table(table_name);
+    DbRelation &columns = SQLExec::tables->get_table("_columns");
+    Handles *column_handles = columns.select(&row);
+    Handles *table_handle = SQLExec::tables->select(&row);
+    
+    try {
+        // remove columns from _columns
+        for (Handle handle : *column_handles)
+            columns.del(handle);
+        
+        // remove table file
+        table.drop();
+
+        // remove table from _table
+        SQLExec::tables->del(*table_handle->begin());
+
+    } catch (...) {
+        delete table_handle;
+        delete column_handles;
+        
+        throw SQLExecError("table deletion failed");
+    }
+    delete table_handle;
+    delete column_handles;
+
+    return new QueryResult("dropped " + table_name);
 }
 
 QueryResult *SQLExec::show(const ShowStatement *statement) {
