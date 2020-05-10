@@ -257,9 +257,9 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
 {
     switch (statement->type)
     {
-    case ShowStatement::sTables:
+    case ShowStatement::kTables:
         return show_tables();
-    case ShowStatement::sColumns:
+    case ShowStatement::kColumns:
         return show_columns(statement);
     default:
         throw SQLExecError("Invalid SHOW type. Only show tables or columns.");
@@ -277,7 +277,7 @@ QueryResult *SQLExec::show_tables()
     column_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
 
     Handles *handles = SQLExec::tables->select();
-    // Minus the "_tables" and "_columns"
+    // Minus the "_tables" and "_columns". Number of returned rows in result.
     u_long number_of_rows = handles->size() - 2;
 
     ValueDicts *rows = new ValueDicts;
@@ -298,5 +298,31 @@ QueryResult *SQLExec::show_tables()
 // SHOW columns of a table
 QueryResult *SQLExec::show_columns(const ShowStatement *statement)
 {
-    return new QueryResult("not implemented"); // FIXME
+    //Get tables
+    DbRelation &columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
+
+    //Add column names with the table name, column name, and data type
+    ColumnNames *column_names = new ColumnNames;
+    column_names->push_back("table_name");
+    column_names->push_back("column_name");
+    column_names->push_back("data_type");
+
+    ColumnAttributes *column_attributes = new ColumnAttributes;
+    column_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
+
+    //Get columns from specific table in statement
+    ValueDict where;
+    where["table_name"] = Value(statement->tableName);
+    Handles *handles = columns.select(&where);
+    u_long number_of_rows = handles->size(); // Number of returned rows in result
+
+    ValueDicts *rows = new ValueDicts;
+    for (auto const &handle : *handles)
+    {
+        ValueDict *row = columns.project(handle, column_names);
+        rows->push_back(row);
+    }
+    delete handles;
+    return new QueryResult(column_names, column_attributes, rows,
+                           "successfully returned " + to_string(number_of_rows) + " rows");
 }
