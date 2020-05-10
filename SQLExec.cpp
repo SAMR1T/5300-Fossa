@@ -42,8 +42,17 @@ ostream &operator<<(ostream &out, const QueryResult &qres) {
     return out;
 }
 
+/**
+ * Destructor
+ */ 
 QueryResult::~QueryResult() {
-    // FIXME
+    delete column_names;
+    delete column_attributes;
+    if (rows != nullptr) {
+        for (auto row : *rows)
+            delete row;
+        delete rows;
+    }
 }
 
 /**
@@ -199,7 +208,7 @@ QueryResult *SQLExec::drop(const DropStatement *statement) {
     } catch (...) {
         delete table_handle;
         delete column_handles;
-        
+
         throw SQLExecError("table deletion failed");
     }
     delete table_handle;
