@@ -53,8 +53,10 @@ ostream &operator<<(ostream &out, const QueryResult &qres)
  */
 QueryResult::~QueryResult()
 {
-    delete column_names;
-    delete column_attributes;
+    if (column_names != nullptr)
+        delete column_names;
+    if (column_attributes != nullptr)
+        delete column_attributes;
     if (rows != nullptr)
     {
         for (auto row : *rows)
@@ -88,7 +90,7 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
             return new QueryResult("not implemented");
         }
     }
-    catch (DbRelationError &e)
+    catch (DbRelationError& e)
     {
         throw SQLExecError(string("DbRelationError: ") + e.what());
     }
@@ -187,12 +189,13 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
             try
             {
                 // remove added columns
-                for (Handle handle : column_handles)
+                for (auto const handle : column_handles)
                     columns.del(handle);
             }
             catch (...)
             {
             }
+            throw;
         }
     }
     catch (exception& e)
@@ -205,7 +208,7 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
         catch (...)
         {
         }
-        throw SQLExecError("table creation failed");
+        throw;
     }
     return new QueryResult("created " + table_name);
 }
