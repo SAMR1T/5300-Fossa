@@ -255,7 +255,8 @@ QueryResult *SQLExec::drop(const DropStatement *statement)
 // SHOW Query type based on statement by user call
 QueryResult *SQLExec::show(const ShowStatement *statement)
 {
-    switch (statement->type) {
+    switch (statement->type)
+    {
     case ShowStatement::sTables:
         return show_tables();
     case ShowStatement::sColumns:
@@ -265,11 +266,36 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
     }
 }
 
+// SHOW tables of a schema
 QueryResult *SQLExec::show_tables()
 {
-    return new QueryResult("not implemented"); // FIXME
+    //Get columns for a specific table
+    ColumnNames *column_names = new ColumnNames;
+    column_names->push_back("table_name");
+
+    ColumnAttributes *column_attributes = new ColumnAttributes;
+    column_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
+
+    Handles *handles = SQLExec::tables->select();
+    // Minus the "_tables" and "_columns"
+    u_long number_of_rows = handles->size() - 2;
+
+    ValueDicts *rows = new ValueDicts;
+    for (auto const &handle : *handles)
+    {
+        ValueDict *row = SQLExec::tables->project(handle, column_names);
+        // Add tables only if not "_tables" or "_columns"
+        if (row->at("table_name").s != Tables::TABLE_NAME && row->at("table_name").s != Columns::TABLE_NAME)
+            rows->push_back(row);
+    }
+
+    delete handles;
+
+    return new QueryResult(column_names, column_attributes, rows,
+                           "successfully returned " + to_string(number_of_rows) + " rows");
 }
 
+// SHOW columns of a table
 QueryResult *SQLExec::show_columns(const ShowStatement *statement)
 {
     return new QueryResult("not implemented"); // FIXME
