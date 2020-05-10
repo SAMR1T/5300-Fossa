@@ -1,7 +1,7 @@
 # 5300-Fossa
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
-Milestone3: Schema Storage - rudimentary implementation if CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS 
+Milestone3: Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS 
 
 ## Tags
 - <code>Milestone1</code> is playing around with the AST returned by the HyLine parser and general setup of the command loop.
