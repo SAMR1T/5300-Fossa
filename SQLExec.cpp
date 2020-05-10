@@ -153,7 +153,7 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
         table_handle = SQLExec::tables->insert(&row);
 
         // add new columns info to _columns
-        DbRelation &columns = SQLExec::tables->get_table("_columns");
+        DbRelation &columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
         try
         {
             for (uint i = 0; i < column_names.size(); ++i)
@@ -182,7 +182,7 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
             else
                 table.create();
         }
-        catch (...)
+        catch (exception& e)
         {
             try
             {
@@ -195,7 +195,7 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
             }
         }
     }
-    catch (...)
+    catch (exception& e)
     {
         try
         {
@@ -207,7 +207,6 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
         }
         throw SQLExecError("table creation failed");
     }
-
     return new QueryResult("created " + table_name);
 }
 
