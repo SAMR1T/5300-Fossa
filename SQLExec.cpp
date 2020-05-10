@@ -267,7 +267,12 @@ QueryResult *SQLExec::drop(const DropStatement *statement)
     return new QueryResult("dropped " + table_name);
 }
 
-// SHOW Query type based on statement by user call
+
+/**
+ * SHOW Query type based on statement by user call
+ * @param statement given statement for show option
+ * @return          query execution result
+ */
 QueryResult *SQLExec::show(const ShowStatement *statement)
 {
     switch (statement->type)
@@ -281,7 +286,10 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
     }
 }
 
-// SHOW tables of a schema
+/**
+ * SHOW tables of a schema
+ * @return query execution result
+ */
 QueryResult *SQLExec::show_tables()
 {
     //Get columns for a specific table
@@ -310,7 +318,11 @@ QueryResult *SQLExec::show_tables()
                            "successfully returned " + to_string(number_of_rows) + " rows");
 }
 
-// SHOW columns of a table
+/**
+ * SHOW columns of a table
+ * @param statement given statement for selected table
+ * @return          query execution result
+ */ 
 QueryResult *SQLExec::show_columns(const ShowStatement *statement)
 {
     //Get tables
