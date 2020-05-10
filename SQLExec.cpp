@@ -132,9 +132,22 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
     ColumnAttribute column_attribute;
     ColumnAttributes column_attributes;
 
+    // DbRelation &table = SQLExec::tables->get_table(table_name);
+    DbRelation *tab = &SQLExec::tables->get_table(table_name);
+
+    if (tab != nullptr)
+        throw  DbRelationError("table " + table_name + " already exists");
+
     for (ColumnDefinition *col : *statement->columns)
     {
         column_definition(col, column_name, column_attribute);
+
+        for (Identifier name : column_names) 
+        {
+            if (name == column_name)
+                throw  DbRelationError("duplicate column " + table_name + "." + column_name);
+        }
+
         column_names.push_back(column_name);
         column_attributes.push_back(column_attribute);
     }
