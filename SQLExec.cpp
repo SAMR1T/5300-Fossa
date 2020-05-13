@@ -53,8 +53,12 @@ ostream &operator<<(ostream &out, const QueryResult &qres)
  */
 QueryResult::~QueryResult()
 {
-    delete column_names;
-    delete column_attributes;
+    if (column_names != nullptr)
+        delete column_names;
+        
+    if (column_attributes != nullptr)
+        delete column_attributes;
+
     if (rows != nullptr)
     {
         for (auto row : *rows)
