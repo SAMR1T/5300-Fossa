@@ -55,10 +55,8 @@ QueryResult::~QueryResult()
 {
     if (column_names != nullptr)
         delete column_names;
-        
     if (column_attributes != nullptr)
         delete column_attributes;
-
     if (rows != nullptr)
     {
         for (auto row : *rows)
@@ -92,7 +90,7 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
             return new QueryResult("not implemented");
         }
     }
-    catch (DbRelationError &e)
+    catch (DbRelationError& e)
     {
         throw SQLExecError(string("DbRelationError: ") + e.what());
     }
@@ -136,22 +134,9 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
     ColumnAttribute column_attribute;
     ColumnAttributes column_attributes;
 
-    // DbRelation &table = SQLExec::tables->get_table(table_name);
-    DbRelation *tab = &SQLExec::tables->get_table(table_name);
-
-    if (tab != nullptr)
-        throw  DbRelationError("table " + table_name + " already exists");
-
     for (ColumnDefinition *col : *statement->columns)
     {
         column_definition(col, column_name, column_attribute);
-
-        for (Identifier name : column_names) 
-        {
-            if (name == column_name)
-                throw  DbRelationError("duplicate column " + table_name + "." + column_name);
-        }
-
         column_names.push_back(column_name);
         column_attributes.push_back(column_attribute);
     }
@@ -204,12 +189,13 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
             try
             {
                 // remove added columns
-                for (Handle handle : column_handles)
+                for (auto const handle : column_handles)
                     columns.del(handle);
             }
             catch (...)
             {
             }
+            throw;
         }
     }
     catch (exception& e)
@@ -222,7 +208,7 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
         catch (...)
         {
         }
-        throw SQLExecError("table creation failed");
+        throw;
     }
     return new QueryResult("created " + table_name);
 }
@@ -268,7 +254,12 @@ QueryResult *SQLExec::drop(const DropStatement *statement)
     return new QueryResult("dropped " + table_name);
 }
 
-// SHOW Query type based on statement by user call
+
+/**
+ * SHOW Query type based on statement by user call
+ * @param statement given statement for show option
+ * @return          query execution result
+ */
 QueryResult *SQLExec::show(const ShowStatement *statement)
 {
     switch (statement->type)
@@ -282,7 +273,10 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
     }
 }
 
-// SHOW tables of a schema
+/**
+ * SHOW tables of a schema
+ * @return query execution result
+ */
 QueryResult *SQLExec::show_tables()
 {
     //Get columns for a specific table
@@ -311,7 +305,11 @@ QueryResult *SQLExec::show_tables()
                            "successfully returned " + to_string(number_of_rows) + " rows");
 }
 
-// SHOW columns of a table
+/**
+ * SHOW columns of a table
+ * @param statement given statement for selected table
+ * @return          query execution result
+ */ 
 QueryResult *SQLExec::show_columns(const ShowStatement *statement)
 {
     //Get tables
