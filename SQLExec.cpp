@@ -80,14 +80,14 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
     {
         switch (statement->type())
         {
-        case kStmtCreate:
-            return create((const CreateStatement *)statement);
-        case kStmtDrop:
-            return drop((const DropStatement *)statement);
-        case kStmtShow:
-            return show((const ShowStatement *)statement);
-        default:
-            return new QueryResult("not implemented");
+            case kStmtCreate:
+                return create((const CreateStatement *)statement);
+            case kStmtDrop:
+                return drop((const DropStatement *)statement);
+            case kStmtShow:
+                return show((const ShowStatement *)statement);
+            default:
+                return new QueryResult("not implemented");
         }
     }
     catch (DbRelationError& e)
@@ -104,19 +104,36 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
  */
 void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute)
 {
-
     column_name = col->name;
 
     switch (col->type)
     {
-    case ColumnDefinition::INT:
-        column_attribute.set_data_type(ColumnAttribute::INT);
-        break;
-    case ColumnDefinition::TEXT:
-        column_attribute.set_data_type(ColumnAttribute::TEXT);
-        break;
-    default:
-        throw SQLExecError("data type not implemented");
+        case ColumnDefinition::INT:
+            column_attribute.set_data_type(ColumnAttribute::INT);
+            break;
+        case ColumnDefinition::TEXT:
+            column_attribute.set_data_type(ColumnAttribute::TEXT);
+            break;
+        default:
+            throw SQLExecError("data type not implemented");
+    }
+}
+
+/**
+ * create a table or an index based on given statement
+ * @param statement given statement for creation
+ * @return          query execution result
+ */
+QueryResult *SQLExec::create(const CreateStatement *statement) 
+{
+    switch (statement->type) 
+    {
+        case CreateStatement::kTable:
+            return create_table(statement);
+        case CreateStatement::kIndex:
+            return create_index(statement);
+        default:
+            return new QueryResult("Only CREATE TABLE and CREATE INDEX are implemented");
     }
 }
 
@@ -125,9 +142,8 @@ void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_
  * @param statement given statement for table creation
  * @return          query execution result
  */
-QueryResult *SQLExec::create(const CreateStatement *statement)
+QueryResult *SQLExec::create_table(const CreateStatement *statement)
 {
-
     Identifier table_name = statement->tableName;
     Identifier column_name;
     ColumnNames column_names;
@@ -164,14 +180,14 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
 
                 switch (column_attributes[i].get_data_type())
                 {
-                case ColumnAttribute::INT:
-                    row["data_type"] = Value("INT");
-                    break;
-                case ColumnAttribute::TEXT:
-                    row["data_type"] = Value("TEXT");
-                    break;
-                default:
-                    throw SQLExecError("data type not implemented");
+                    case ColumnAttribute::INT:
+                        row["data_type"] = Value("INT");
+                        break;
+                    case ColumnAttribute::TEXT:
+                        row["data_type"] = Value("TEXT");
+                        break;
+                    default:
+                        throw SQLExecError("data type not implemented");
                 }
                 column_handle = columns.insert(&row);
                 column_handles.push_back(column_handle);
@@ -214,25 +230,56 @@ QueryResult *SQLExec::create(const CreateStatement *statement)
 }
 
 /**
+ * Create a table with a given statement
+ * @param statement given statement for table creation
+ * @return          query execution result
+ */
+QueryResult *SQLExec::create_index(const CreateStatement *statement)
+{
+    return new QueryResult("create index not implemented");  // FIXME
+}
+
+/**
+ * Drop a table or an index based on given statement
+ * @param statement given statement for removal
+ * @return          query execution result
+ */
+QueryResult *SQLExec::drop(const DropStatement *statement) {
+    switch (statement->type) 
+    {
+        case DropStatement::kTable:
+            return drop_table(statement);
+        case DropStatement::kIndex:
+            return drop_index(statement);
+        default:
+            return new QueryResult("Only DROP TABLE and CREATE INDEX are implemented");
+    }
+}
+
+/**
  * Drop a table with a given statement
  * @param statement given statement for table removal
  * @return          query execution result
  */
-QueryResult *SQLExec::drop(const DropStatement *statement)
+QueryResult *SQLExec::drop_table(const DropStatement *statement)
 {
     Identifier table_name = statement->name;
+
+    if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME)
+        throw SQLExecError("cannot drop a schema table");
+
     ValueDict row;
     row["table_name"] = Value(table_name);
 
     DbRelation &table = SQLExec::tables->get_table(table_name);
-    DbRelation &columns = SQLExec::tables->get_table("_columns");
+    DbRelation &columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
     Handles *column_handles = columns.select(&row);
     Handles *table_handle = SQLExec::tables->select(&row);
 
     try
     {
         // remove columns from _columns
-        for (Handle handle : *column_handles)
+        for (auto const &handle : *column_handles)
             columns.del(handle);
 
         // remove table file
@@ -254,6 +301,14 @@ QueryResult *SQLExec::drop(const DropStatement *statement)
     return new QueryResult("dropped " + table_name);
 }
 
+/**
+ * Drop an index with a given statement
+ * @param statement given statement for index removal
+ * @return          query execution result
+ */
+QueryResult *SQLExec::drop_index(const DropStatement *statement) {
+    return new QueryResult("drop index not implemented");  // FIXME
+}
 
 /**
  * SHOW Query type based on statement by user call
@@ -264,13 +319,23 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
 {
     switch (statement->type)
     {
-    case ShowStatement::kTables:
-        return show_tables();
-    case ShowStatement::kColumns:
-        return show_columns(statement);
-    default:
-        throw SQLExecError("Invalid SHOW type. Only show tables or columns.");
+        case ShowStatement::kTables:
+            return show_tables();
+        case ShowStatement::kColumns:
+            return show_columns(statement);
+        case ShowStatement::kIndex:
+            return show_index(statement);
+        default:
+            throw SQLExecError("Invalid SHOW type. Only show tables or columns.");
     }
+}
+
+/**
+ * SHOW index
+ * @return query execution result
+ */
+QueryResult *SQLExec::show_index(const ShowStatement *statement) {
+    return new QueryResult("not implemented"); // FIXME
 }
 
 /**
