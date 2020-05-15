@@ -10,6 +10,7 @@ using namespace hsql;
 
 // define static data
 Tables *SQLExec::tables = nullptr;
+Indices* SQLExec::indices = nullptr;
 
 // make query result be printable
 ostream &operator<<(ostream &out, const QueryResult &qres)
@@ -230,13 +231,59 @@ QueryResult *SQLExec::create_table(const CreateStatement *statement)
 }
 
 /**
- * Create a table with a given statement
- * @param statement given statement for table creation
+ * Create index with a given statement
+ * @param statement given statement for index creation
  * @return          query execution result
  */
 QueryResult *SQLExec::create_index(const CreateStatement *statement)
 {
-    return new QueryResult("create index not implemented");  // FIXME
+    Identifier table_name = statement->tableName;
+    Identifier index_name = statement->indexName;
+    char* index_type = statement->indexType;    
+
+    ValueDict row;
+    row["table_name"] = Value(table_name);
+    row["index_name"] = Value(index_name);
+    row["index_type"] = Value(index_type); 
+    row["is_unique"] = (string(index_type) == "BTREE") ? true : false;
+
+    // for rollback in exception
+    Handle index_handle;
+    Handles index_handles;
+    int seq_in_index = 1;
+    
+    try 
+    {
+        for (auto const& col : *statement->indexColumns)
+        {   
+            row["column_name"] = Value(col);
+            row["seq_in_index"] = Value(seq_in_index++);
+            std::cout << "check 0" << std::endl; // DEL
+            index_handle = SQLExec::indices->insert(&row);
+            std::cout << "check 1" << std::endl; // DEL
+            index_handles.push_back(index_handle);
+            std::cout << "check 2" << std::endl; // DEL
+        }    
+        // create index
+        DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
+        std::cout << "check 3" << std::endl; // DEL
+        index.create();
+        std::cout << "check 4" << std::endl; // DEL
+    }
+    catch (exception& e)
+    {
+        try
+        {
+            // rollback
+            for (auto const handle : index_handles)
+                SQLExec::indices->del(handle);
+        }
+        catch (...)
+        {
+        }
+        throw; 
+    }
+    return new QueryResult("created index " + index_name);
 }
 
 /**
