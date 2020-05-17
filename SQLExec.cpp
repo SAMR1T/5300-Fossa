@@ -373,7 +373,7 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement)
 
 /**
  * Drop an index with a given statement
- * @param statement given statement for index removal
+ * @param statement given statement for index removal from a table
  * @return          query execution result
  */
 QueryResult *SQLExec::drop_index(const DropStatement *statement)
@@ -415,13 +415,14 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
     case ShowStatement::kIndex:
         return show_index(statement);
     default:
-        throw SQLExecError("Invalid SHOW type. Only show tables or columns.");
+        throw SQLExecError("Invalid SHOW type.");
     }
 }
 
 /**
  * SHOW index
- * @return query execution result
+ * @param statement given statement for show index from selected table
+ * @return          query execution result
  */
 QueryResult *SQLExec::show_index(const ShowStatement *statement)
 {
