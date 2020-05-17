@@ -263,17 +263,13 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement)
         {
             row["column_name"] = Value(col);
             row["seq_in_index"] = Value(seq_in_index++);
-            std::cout << "check 0" << std::endl; // DEL
+
             index_handle = SQLExec::indices->insert(&row);
-            std::cout << "check 1" << std::endl; // DEL
             index_handles.push_back(index_handle);
-            std::cout << "check 2" << std::endl; // DEL
         }
         // create index
         DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
-        std::cout << "check 3" << std::endl; // DEL
         index.create();
-        std::cout << "check 4" << std::endl; // DEL
     }
     catch (exception &e)
     {
