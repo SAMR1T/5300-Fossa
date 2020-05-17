@@ -77,7 +77,7 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
     if (SQLExec::tables == nullptr)
         SQLExec::tables = new Tables();
 
-    //initialize _indices table, if not yet present
+    // initialize _indices table, if not yet present
 	if (SQLExec::indices == nullptr) {
 		SQLExec::indices = new Indices();
 	}
@@ -357,7 +357,25 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement)
  */
 QueryResult *SQLExec::drop_index(const DropStatement *statement)
 {
-    return new QueryResult("drop index not implemented"); // FIXME
+    // Get table_name and index_name
+    Identifier table_name = statement->tableName;
+    Identifier index_name = statement->indexName;
+
+    // Get index from the database DbIndex
+	DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+    ValueDict where;
+    where["table_name"] = Value(table_name);
+    where["index_name"] = Value(index_name);
+    Handles *index_handles = SQLExec::indices->select(&where);
+    index.drop();
+    // Remove every index through index handles
+    for (auto const &handle : *index_handles) 
+    {
+        SQLExec::indices->del(handle);
+    }
+    delete index_handles;
+
+    return new QueryResult("dropped index " + index_name);
 }
 
 /**
