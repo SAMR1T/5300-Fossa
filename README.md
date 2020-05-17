@@ -1,19 +1,19 @@
 # 5300-Fossa
-DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
+DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020 
 
-###Milestone3: 
-Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS 
-###Milestone 4: 
-Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name
+**Milestone3:**
+Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS. </br> 
+**Milestone 4:**
+Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name. </br>
 
-###General Steps:
+**General Steps:** </br>
 1. Git clone or download this repo
 2. Compile the code by runing "make"
 3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
 4. Use example test commands as below
 5. Use "quit" to exit
 
-**Test Steps for M3** (Create Table, Show Table/Columns and Drop Table):
+**Test Steps for M3:** (Create Table, Show Table/Columns and Drop Table)
 ```sql
 SQL> show tables
 SHOW TABLES
@@ -74,7 +74,7 @@ table_name column_name data_type
 successfully returned 0 rows
 ```
 
-**Test Steps for M4 (Continued with M3 above)** (Create Index, Show Index and Drop Index):
+**Test Steps for M4 (Continued with M3 above):** (Create Index, Show Index and Drop Index)
 ```sql
 SQL> create table goober (x int, y int, z int)
 SQL> show tables
