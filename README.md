@@ -77,6 +77,8 @@ successfully returned 0 rows
 **Test Steps for M4 (Continued with M3 above):** (Create Index, Show Index and Drop Index)
 ```sql
 SQL> create table goober (x int, y int, z int)
+CREATE TABLE goober (x INT, y INT, z INT)
+created goober
 SQL> show tables
 SHOW TABLES
 table_name 
@@ -157,6 +159,13 @@ table_name index_name column_name seq_in_index index_type is_unique
 +----------+----------+----------+----------+----------+----------+
 successfully returned 0 rows
 SQL> drop table goober
+DROP TABLE goober
+dropped goober
+SQL> show tables
+SHOW TABLES
+table_name
++----------+
+successfully returned 0 rows
 SQL> quit
 ```
 
