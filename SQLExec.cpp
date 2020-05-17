@@ -333,7 +333,7 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement)
     for (auto const &handle : *index_handles)
     {
         ValueDict *index_attributes = SQLExec::indices->project(handle);
-        DbIndex &index = SQLExec::indices->get_index(table_name, index_attributes->at("index_name"));
+        DbIndex &index = SQLExec::indices->get_index(table_name, index_attributes->at("index_name").s);
         index.drop();
     }
     // Remove indices from schema table
