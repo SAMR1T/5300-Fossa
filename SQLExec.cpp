@@ -245,12 +245,22 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement)
 {
     Identifier table_name = statement->tableName;
     Identifier index_name = statement->indexName;
-    char *index_type = statement->indexType;
+    char *index_type;
 
     ValueDict row;
     row["table_name"] = Value(table_name);
     row["index_name"] = Value(index_name);
     row["index_type"] = Value(index_type);
+
+    try
+    {
+        index_type = statement->indexType;
+    }
+    catch (exception &e)
+    {
+        index_type = "BTREE";
+    }
+
     row["is_unique"] = (string(index_type) == "BTREE" ? true : false);
 
     // for rollback in exception
@@ -337,7 +347,7 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement)
         index.drop();
     }
     // Remove indices from schema table
-    for (auto const &handle : *index_handles) 
+    for (auto const &handle : *index_handles)
     {
         SQLExec::indices->del(handle);
     }
@@ -424,19 +434,19 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement)
 {
     // Get table name and prepare column header names
     Identifier table_name = statement->tableName;
-    ColumnNames* column_names = new ColumnNames;
+    ColumnNames *column_names = new ColumnNames;
     column_names->push_back("table_name");   // e.g. goober
-	column_names->push_back("index_name");   // e.g. fx
-	column_names->push_back("column_name");  // e.g. x/y/z
-	column_names->push_back("seq_in_index"); // e.g. 1
+    column_names->push_back("index_name");   // e.g. fx
+    column_names->push_back("column_name");  // e.g. x/y/z
+    column_names->push_back("seq_in_index"); // e.g. 1
     column_names->push_back("index_type");   // e.g. BTREE / HASH
     column_names->push_back("is_unique");    // e.g. Ture if BTREE, False if HASH
 
     // Get indices from specific table
     ValueDict where;
-	where["table_name"] = Value(statement->tableName);
-    Handles *index_handles = SQLExec::indices->select(&where);    
-    u_long number_of_rows = index_handles->size();  // Number of rows returned in result
+    where["table_name"] = Value(statement->tableName);
+    Handles *index_handles = SQLExec::indices->select(&where);
+    u_long number_of_rows = index_handles->size(); // Number of rows returned in result
 
     // Get all column content and name of the indices table
     ValueDicts *rows = new ValueDicts;
@@ -446,9 +456,9 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement)
         rows->push_back(row);
     }
     delete index_handles;
-    
+
     return new QueryResult(column_names, nullptr, rows,
-		" successfully returned " + to_string(number_of_rows) + " rows");
+                           " successfully returned " + to_string(number_of_rows) + " rows");
 }
 
 /**
