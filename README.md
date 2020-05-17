@@ -1,18 +1,20 @@
 # 5300-Fossa
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
-Milestone3: Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS 
-Milestone 4: Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name
+###Milestone3: 
+Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS 
+###Milestone 4: 
+Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name
 
-General Steps:
+###General Steps:
 1. Git clone or download this repo
 2. Compile the code by runing "make"
 3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
 4. Use example test commands as below
 5. Use "quit" to exit
 
-```sql
 **Test Steps for M3** (Create Table, Show Table/Columns and Drop Table):
+```sql
 SQL> show tables
 SHOW TABLES
 table_name 
@@ -72,8 +74,8 @@ table_name column_name data_type
 successfully returned 0 rows
 ```
 
-```sql
 **Test Steps for M4 (Continued with M3 above)** (Create Index, Show Index and Drop Index):
+```sql
 SQL> create table goober (x int, y int, z int)
 SQL> show tables
 SHOW TABLES
@@ -164,7 +166,7 @@ $ rm -f data/*
 ``` 
 
 ## Current Status
-Milestone 3: All test implementations are successful.
-Milestone 4: All test implementations are successful.
+Milestone 3: All test implementations are successful. </br>
+Milestone 4: All test implementations are successful. </br>
 
 ## Handoff video
