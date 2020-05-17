@@ -1,18 +1,19 @@
 # 5300-Fossa
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020 
 
-**Milestone3:**
-Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS. </br> 
+## Sprint Otoño
+**Milestone 3:**
+Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, and SHOW COLUMNS. </br> 
 
 **Milestone 4:**
-Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name. </br>
+Indexing Setup - rudimentary implementation of CREATE INDEX, SHOW INDEX, and DROP INDEX. </br>
 
 **General Steps:** </br>
 1. Git clone or download this repo
 2. Compile the code by runing "make"
 3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
-4. Use example test commands as below
-5. Use "quit" to exit
+4. Try example test commands as below
+5. Enter "quit" to exit
 
 **Test Steps for M3:** (Create Table, Show Table/Columns and Drop Table)
 ```sql
@@ -171,7 +172,7 @@ SQL> quit
 
 If there is failed test or just want to start over the test, delete all data as below:
 ```sh
-$ rm -f data/*
+rm -f ../data/*
 ``` 
 
 ## Current Status
@@ -179,3 +180,50 @@ Milestone 3: All test implementations are successful. </br>
 Milestone 4: All test implementations are successful. </br>
 
 ## Handoff video
+
+
+## Previous Sprint & Milestones
+**Verano Sprint Handover video link**
+
+https://seattleu.instructuremedia.com/embed/1ac8f7c4-d8a2-4af0-8154-0a0bb1aac86f
+
+**What does this project currently do?**
+
+Milestone 1
+SQL interpreter that currently accepts SQL statements and just returns a string which is the SQL statement string corresponding to the data structure.
+
+Milestone 2 
+At this point, the SQL interpreter now has a rudimentry heap storage engine. We have implemented the basic functions needed for HeapTable, but only for two data types: integer and text.
+
+**What statements does this project's SQL interpreter currently support?**
+
+Milestone 1
+Select and create statements
+
+**What basic functions does this project's HeapTable currently support?**
+
+Milestone 2
+create, create_if_not_exist, open, close, drop, insert( integer, text only), select( ignoring WHERE, GROUP BY and LIMIT), and project
+
+**Example sql statement and output string?**
+
+SQL> create table foo (a text, b integer, c double)
+
+CREATE TABLE foo (a TEXT, b INT, c DOUBLE)
+
+SQL> select * from foo left join goober on foo.x=goober.x
+
+SELECT * FROM foo LEFT JOIN goober ON foo.x = goober.x
+
+
+**How to run this project?**
+
+1) Download and open this project directory
+
+2) Run make
+
+3) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files. Make sure you create this directory before running this command)
+
+4) To use sql interpreter, start typing sql commands like the examples shown above.
+
+5) To test heap storage, type test and hit enter.
