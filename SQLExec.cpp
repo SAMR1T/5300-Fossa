@@ -436,13 +436,13 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement)
     ValueDict where;
 	where["table_name"] = Value(statement->tableName);
     Handles *index_handles = SQLExec::indices->select(&where);    
-    u_long number_of_rows = handles->size();  // Number of rows returned in result
+    u_long number_of_rows = index_handles->size();  // Number of rows returned in result
 
     // Get all column content and name of the indices table
     ValueDicts *rows = new ValueDicts;
-    for (auto const &handle : *handles)
+    for (auto const &handle : *index_handles)
     {
-        ValueDict *row = columns.project(handle, column_names);
+        ValueDict *row = SQLExec::indices->project(handle, column_names);
         rows->push_back(row);
     }
     delete index_handles;
