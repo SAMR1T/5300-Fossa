@@ -245,13 +245,13 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement)
 {
     Identifier table_name = statement->tableName;
     Identifier index_name = statement->indexName;
-    char *index_type = statement->indexType;
+    Identifier index_type = statement->indexType;
 
     ValueDict row;
     row["table_name"] = Value(table_name);
     row["index_name"] = Value(index_name);
     row["index_type"] = Value(index_type);
-    row["is_unique"] = (string(index_type) == "BTREE") ? true : false;
+    row["is_unique"] = (index_type == "BTREE") ? true : false;
 
     // for rollback in exception
     Handle index_handle;
