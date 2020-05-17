@@ -77,6 +77,11 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
     if (SQLExec::tables == nullptr)
         SQLExec::tables = new Tables();
 
+    //initialize _indices table, if not yet present
+	if (SQLExec::indices == nullptr) {
+		SQLExec::indices = new Indices();
+	}
+
     try
     {
         switch (statement->type())
