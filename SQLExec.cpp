@@ -422,7 +422,33 @@ QueryResult *SQLExec::show(const ShowStatement *statement)
  */
 QueryResult *SQLExec::show_index(const ShowStatement *statement)
 {
-    return new QueryResult("not implemented"); // FIXME
+    // Get table name and prepare column header names
+    Identifier table_name = statement->tableName;
+    ColumnNames* column_names = new ColumnNames;
+    column_names->push_back("table_name");   // e.g. goober
+	column_names->push_back("index_name");   // e.g. fx
+	column_names->push_back("column_name");  // e.g. x/y/z
+	column_names->push_back("seq_in_index"); // e.g. 1
+    column_names->push_back("index_type");   // e.g. BTREE
+    column_names->push_back("is_unique");    // e.g. Ture if BTREE
+
+    // Get indices from specific table
+    ValueDict where;
+	where["table_name"] = Value(statement->tableName);
+    Handles *index_handles = SQLExec::indices->select(&where);    
+    u_long number_of_rows = handles->size();  // Number of rows returned in result
+
+    // Get all column content and name of the indices table
+    ValueDicts *rows = new ValueDicts;
+    for (auto const &handle : *handles)
+    {
+        ValueDict *row = columns.project(handle, column_names);
+        rows->push_back(row);
+    }
+    delete index_handles;
+    
+    return new QueryResult(column_names, nullptr, rows,
+		" successfully returned " + to_string(rowNum) + " rows");
 }
 
 /**
