@@ -2,9 +2,17 @@
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
 Milestone3: Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS 
+Milestone 4: Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name
+
+General Steps:
+1. Git clone or download this repo
+2. Compile the code by runing "make"
+3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
+4. Use example test commands as below
+5. Use "quit" to exit
 
 ```sql
-Test Steps:
+**Test Steps for M3** (Create Table, Show Table/Columns and Drop Table):
 SQL> show tables
 SHOW TABLES
 table_name 
@@ -62,24 +70,101 @@ SHOW COLUMNS FROM foo
 table_name column_name data_type 
 +----------+----------+----------+
 successfully returned 0 rows
+```
+
+```sql
+**Test Steps for M4 (Continued with M3 above)** (Create Index, Show Index and Drop Index):
+SQL> create table goober (x int, y int, z int)
+SQL> show tables
+SHOW TABLES
+table_name 
++----------+
+"goober" 
+successfully returned 1 rows
+SQL> show columns from goober
+SHOW COLUMNS FROM goober
+table_name column_name data_type 
++----------+----------+----------+
+"goober" "x" "INT" 
+"goober" "y" "INT" 
+"goober" "z" "INT" 
+successfully returned 3 rows
+SQL> create index fx on goober (x,y)
+CREATE INDEX fx ON goober USING BTREE (x, y)
+created index fx
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+"goober" "fx" "x" 1 "BTREE" true 
+"goober" "fx" "y" 2 "BTREE" true 
+successfully returned 2 rows
+SQL> drop index fx from goober
+DROP INDEX fx FROM goober
+dropped index fx
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+successfully returned 0 rows
+SQL> create index fx on goober (x)
+CREATE INDEX fx ON goober USING BTREE (x)
+created index fx
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+"goober" "fx" "x" 1 "BTREE" true 
+successfully returned 1 rows
+SQL> create index fx on goober (y,z)
+CREATE INDEX fx ON goober USING BTREE (y, z)
+Error: DbRelationError: duplicate index goober fx
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+"goober" "fx" "x" 1 "BTREE" true 
+successfully returned 1 rows
+SQL> create index fyz on goober (y,z)
+CREATE INDEX fyz ON goober USING BTREE (y, z)
+created index fyz
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+"goober" "fx" "x" 1 "BTREE" true 
+"goober" "fyz" "y" 1 "BTREE" true 
+"goober" "fyz" "z" 2 "BTREE" true 
+successfully returned 3 rows
+SQL> drop index fx from goober
+DROP INDEX fx FROM goober
+dropped index fx
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+"goober" "fyz" "y" 1 "BTREE" true 
+"goober" "fyz" "z" 2 "BTREE" true 
+successfully returned 2 rows
+SQL> drop index fyz from goober
+DROP INDEX fyz FROM goober
+dropped index fyz
+SQL> show index from goober
+SHOW INDEX FROM goober
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+successfully returned 0 rows
+SQL> drop table goober
 SQL> quit
 ```
 
-## Unit Tests
-There are some tests for SlottedPage and HeapTable. They can be invoked from the <clode>SQL</code> prompt:
-```sql
-SQL> test
-```
-Be aware that failed tests may leave garbage Berkeley DB files lingering in your data directory. 
-If you don't care about any data in there, you are advised to just delete them all after a failed test.
+If there is failed test or just want to start over the test, delete all data as below:
 ```sh
 $ rm -f data/*
 ``` 
 
-## Valgrind (Linux)
-To run valgrind (files must be compiled with -ggdb):
-```sh
-$ valgrind --leak-check=full --suppressions=valgrind.supp ./sql5300 data
-```
-Note that we've added suppression for the known issues with the Berkeley DB library <em>vis-à-vis</em> valgrind.
+## Current Status
+Milestone 3: All test implementations are successful.
+Milestone 4: All test implementations are successful.
 
+## Handoff video
