@@ -243,7 +243,7 @@ QueryResult *SQLExec::create_table(const CreateStatement *statement)
  */
 QueryResult *SQLExec::create_index(const CreateStatement *statement)
 {
-    """
+    /*
     Identifier table_name = statement->tableName;
     Identifier index_name = statement->indexName;
 
@@ -298,7 +298,7 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement)
         throw;
     }
     return new QueryResult("created index " + index_name);
-    """
+    */
     Identifier table_name = statement->tableName;
 	ColumnNames column_names;
 	Identifier index_name = statement->indexName;  //variable type might change
