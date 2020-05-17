@@ -3,6 +3,7 @@ DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
 **Milestone3:**
 Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS. </br> 
+
 **Milestone 4:**
 Indexing Setup - implementation of CREATE INDEX index_name ON table_name [USING {BTREE | HASH}] (col1, col2, ...), SHOW INDEX FROM table_name, DROP INDEX index_name ON table_name. </br>
 
@@ -34,7 +35,6 @@ table_name column_name data_type
 "_columns" "column_name" "TEXT" 
 "_columns" "data_type" "TEXT" 
 successfully returned 3 rows
-SQL> 
 SQL> create table foo (id int, data text, x integer, y integer, z integer)
 CREATE TABLE foo (id INT, data TEXT, x INT, y INT, z INT)
 created foo
