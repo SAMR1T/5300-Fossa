@@ -78,9 +78,10 @@ QueryResult *SQLExec::execute(const SQLStatement *statement)
         SQLExec::tables = new Tables();
 
     // initialize _indices table, if not yet present
-	if (SQLExec::indices == nullptr) {
-		SQLExec::indices = new Indices();
-	}
+    if (SQLExec::indices == nullptr)
+    {
+        SQLExec::indices = new Indices();
+    }
 
     try
     {
@@ -325,6 +326,23 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement)
     Handles *column_handles = columns.select(&row);
     Handles *table_handle = SQLExec::tables->select(&row);
 
+    // Remove indices before dropping the table
+    Handles *index_handles = SQLExec::indices->select(&row);
+
+    // Remove indices from db
+    for (auto const &handle : *index_handles)
+    {
+        ValueDict *index_attributes = SQLExec::indices->project(handle);
+        DbIndex &index = SQLExec::indices->get_index(table_name, index_attributes->at("index_name"));
+        index.drop();
+    }
+    // Remove indices from schema table
+    for (auto const &handle : *index_handles) 
+    {
+        SQLExec::indices->del(handle);
+    }
+    delete index_handles;
+
     try
     {
         // remove columns from _columns
@@ -362,14 +380,14 @@ QueryResult *SQLExec::drop_index(const DropStatement *statement)
     Identifier index_name = statement->indexName;
 
     // Get index from the database DbIndex
-	DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+    DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
     ValueDict where;
     where["table_name"] = Value(table_name);
     where["index_name"] = Value(index_name);
     Handles *index_handles = SQLExec::indices->select(&where);
     index.drop();
     // Remove every index through index handles
-    for (auto const &handle : *index_handles) 
+    for (auto const &handle : *index_handles)
     {
         SQLExec::indices->del(handle);
     }
