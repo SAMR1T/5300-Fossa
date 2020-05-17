@@ -243,6 +243,7 @@ QueryResult *SQLExec::create_table(const CreateStatement *statement)
  */
 QueryResult *SQLExec::create_index(const CreateStatement *statement)
 {
+    """
     Identifier table_name = statement->tableName;
     Identifier index_name = statement->indexName;
 
@@ -297,6 +298,69 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement)
         throw;
     }
     return new QueryResult("created index " + index_name);
+    """
+    Identifier table_name = statement->tableName;
+	ColumnNames column_names;
+	Identifier index_name = statement->indexName;  //variable type might change
+	Identifier index_type;
+	bool is_unique;
+
+	//Add to schema: _indices
+	ValueDict row;
+
+	row["table_name"] = table_name;
+
+
+	try {
+		index_type = statement->indexType;
+	}
+	catch (exception& e) {
+		index_type = "BTREE";
+	}
+
+
+	if (index_type == "BTREE") {
+		is_unique = true;
+	}
+	else {
+		is_unique = false;
+	}
+
+	// setup and save the specific information about the row
+	row["table_name"] = table_name;
+	row["index_name"] = index_name;
+	row["seq_in_index"] = 0;
+	row["index_type"] = index_type;
+	row["is_unique"] = is_unique;
+
+	Handles iHandles;
+	//Catching error when inserting each row to _indices schema table
+	try {
+		for (auto const& col : *statement->indexColumns) {
+			row["seq_in_index"].n += 1;
+			row["column_name"] = string(col);
+			iHandles.push_back(SQLExec::indices->insert(&row));
+		}
+
+
+		DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+		index.create();
+	}
+	catch (exception& e) {
+		try {
+			for (unsigned int i = 0; i < iHandles.size(); i++) {
+				SQLExec::indices->del(iHandles.at(i));
+			}
+		}
+		catch (...) {
+
+		}
+
+		throw;
+	}
+
+	return new QueryResult("created index " + index_name);
+
 }
 
 /**
