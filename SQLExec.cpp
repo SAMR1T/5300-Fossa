@@ -429,8 +429,8 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement)
 	column_names->push_back("index_name");   // e.g. fx
 	column_names->push_back("column_name");  // e.g. x/y/z
 	column_names->push_back("seq_in_index"); // e.g. 1
-    column_names->push_back("index_type");   // e.g. BTREE
-    column_names->push_back("is_unique");    // e.g. Ture if BTREE
+    column_names->push_back("index_type");   // e.g. BTREE / HASH
+    column_names->push_back("is_unique");    // e.g. Ture if BTREE, False if HASH
 
     // Get indices from specific table
     ValueDict where;
@@ -448,7 +448,7 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement)
     delete index_handles;
     
     return new QueryResult(column_names, nullptr, rows,
-		" successfully returned " + to_string(rowNum) + " rows");
+		" successfully returned " + to_string(number_of_rows) + " rows");
 }
 
 /**
