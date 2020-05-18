@@ -180,7 +180,7 @@ Milestone 3: All test implementations are successful. </br>
 Milestone 4: All test implementations are successful. </br>
 
 ## Handoff video
-
+https://seattleu.instructuremedia.com/embed/75593406-2793-4844-bdbd-dbc5c38e5e5b
 
 ## Previous Sprint & Milestones
 **Verano Sprint Handover video link**
