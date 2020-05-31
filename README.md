@@ -1,7 +1,38 @@
 # 5300-Fossa
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020 
 
+## Sprint Invierno
+
+**Milstone 5:**
+Implemented certain INSERT, SELECT, and DELETE statements.
+
+**General Steps for Use:** </br>
+1. Git clone or download this repo
+2. Compile the code by runing "make"
+3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
+4. Try example test commands as below
+5. Enter "quit" to exit
+
+**Test for M5:**
+
+```sql
+SQL> insert into goober (z,y,x) VALUES (9,8,7)
+INSERT INTO goober (z, y, x) VALUES (9, 8, 7)
+successfully inserted 1 row into goober and 2 indices
+SQL> select * from goober
+SELECT * FROM goober
+x y z 
++----------+----------+----------+
+4 5 6 
+9 9 9 
+7 8 9 
+successfully returned 3 rows
+```
+
+## Previous Sprints
+
 ## Sprint Otoño
+
 **Milestone 3:**
 Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, and SHOW COLUMNS. </br> 
 
@@ -175,14 +206,17 @@ If there is failed test or just want to start over the test, delete all data as 
 rm -f ../data/*
 ``` 
 
-## Current Status
+**Current Status**
+
 Milestone 3: All test implementations are successful. </br>
 Milestone 4: All test implementations are successful. </br>
 
-## Handoff video
+**Handoff video**
+
 https://seattleu.instructuremedia.com/embed/75593406-2793-4844-bdbd-dbc5c38e5e5b
 
-## Previous Sprint & Milestones
+## Sprint Verano
+
 **Verano Sprint Handover video link**
 
 https://seattleu.instructuremedia.com/embed/1ac8f7c4-d8a2-4af0-8154-0a0bb1aac86f
