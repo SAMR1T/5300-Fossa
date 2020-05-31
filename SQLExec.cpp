@@ -4,6 +4,7 @@
  * @see "Seattle University, CPSC5300, Spring 2020"
  */
 #include "SQLExec.h"
+#include "EvalPlan.h"
 
 using namespace std;
 using namespace hsql;
@@ -93,7 +94,27 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
 }
 
 QueryResult *SQLExec::del(const DeleteStatement *statement) {
-    return new QueryResult("DELETE statement not yet implemented");  // FIXME
+    Identifier table_name = statement->tableName;
+    DbRelation& table = SQLExec::tables->get_table(table_name);
+    EvalPlan *plan = new EvalPlan(table);
+
+    EvalPlan *ev_plan = plan->optimize();
+    EvalPlan pipe = ev_plan->pipeline;
+
+    //get handles and index names
+    Handles *handles = pipe.second;
+    auto index_names = SQLExec::indices->get_index_names(table_name);
+
+    //delete the index first
+    for(auto const &handle : *handles){
+        for(auto const& index_name: index_names){
+            DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
+            index.del(handle);
+        }
+        //remove from table now
+        table.del(handle);
+    }
+    return new QueryResult("Successfully deleted " + to_string(handles->size()) + " rows from " + table_name +  " and " + to_string(index_names.size()) + " indices");
 }
 
 QueryResult *SQLExec::select(const SelectStatement *statement) {
