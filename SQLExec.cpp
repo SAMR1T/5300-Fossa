@@ -3,7 +3,11 @@
  * @author Kevin Lundeen
  * @see "Seattle University, CPSC5300, Spring 2020"
  */
+
+#include <algorithm>
 #include "SQLExec.h"
+#include "ParseTreeToString.h"
+#include "schema_tables.h"
 #include "EvalPlan.h"
 
 using namespace std;
@@ -89,17 +93,72 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-QueryResult *SQLExec::insert(const InsertStatement *statement) {
-    return new QueryResult("INSERT statement not yet implemented");  // FIXME
+QueryResult *SQLExec::insert(const InsertStatement *statement)
+{
+    // get the table
+    DbRelation& table = SQLExec::tables->get_table(statement->tableName);
+   
+    // get the columns
+    ColumnNames column_names;
+    
+    // in case none given
+    if(statement->columns == nullptr) {
+        column_names = table.get_column_names();
+    }
+    else {
+        for (auto const &column: *statement->columns) {
+            column_names.push_back(column);
+        }
+    }
+    
+    // get the values
+    ValueDict values;
+    int valCount = 0;
+    for (Expr *expr : *statement->values)
+    {    
+        Value val;
+        switch(expr->type) 
+        {
+            case(kExprLiteralString):
+                val = Value(expr->name);
+                break;
+            case(kExprLiteralInt):
+                val = Value(expr->ival);
+                break;
+            default:
+                throw SQLExecError(" NOT A VALID INSERT TYPE ");
+        }
+        values[to_string(valCount)] = val;
+        valCount++;
+    }
+    
+    // create the row
+    ValueDict row;
+    for(u_int i = 0; i < column_names.size(); i++)
+        row[column_names.at(i)] = values[to_string(i)];
+    
+    // insert the row
+    Handle t_handle = table.insert(&row);
+    
+	IndexNames index_names = SQLExec::indices->get_index_names(statement->tableName);
+	u_long index_names_size = index_names.size();
+	for (auto const& index_name : index_names)
+	{
+		DbIndex& index = SQLExec::indices->get_index(statement->tableName, index_name);
+			index.insert(t_handle);
+	}
+		
+	return new QueryResult(string("successfully inserted 1 row into ") + statement->tableName + string(" and ") + to_string(index_names_size) + string(" indices"));  
 }
 
-QueryResult *SQLExec::del(const DeleteStatement *statement) {
+QueryResult *SQLExec::del(const DeleteStatement *statement)
+{
     Identifier table_name = statement->tableName;
     DbRelation& table = SQLExec::tables->get_table(table_name);
     EvalPlan *plan = new EvalPlan(table);
 
     EvalPlan *ev_plan = plan->optimize();
-    EvalPlan pipe = ev_plan->pipeline;
+    EvalPlan pipe = ev_plan->pipeline();
 
     //get handles and index names
     Handles *handles = pipe.second;
@@ -117,12 +176,41 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
     return new QueryResult("Successfully deleted " + to_string(handles->size()) + " rows from " + table_name +  " and " + to_string(index_names.size()) + " indices");
 }
 
-QueryResult *SQLExec::select(const SelectStatement *statement) {
-    return new QueryResult("SELECT statement not yet implemented");  // FIXME
+QueryResult *SQLExec::select(const SelectStatement *statement)
+{
+    // get table info
+    DbRelation& table = SQLExec::tables->get_table(statement->fromTable->name);
+    EvalPlan* plan = new EvalPlan(table);
+	ColumnNames* column_names = new ColumnNames;
+	ColumnAttributes* column_attributes = new ColumnAttributes;
+
+    // select expressions
+	if (statement->selectList->at(0)->type == kExprStar) 
+    {
+		*column_names = table.get_column_names();
+		plan = new EvalPlan(EvalPlan::ProjectAll, plan);
+	}
+	else
+    {
+		for (auto const column : *statement->selectList)
+            column_names->push_back(column->name);
+			
+		plan = new EvalPlan(column_names, plan);
+	}
+
+    column_attributes = table.get_column_attributes(*column_names);
+	EvalPlan* optimized_plan = plan->optimize();
+	ValueDicts* rows = optimized_plan->evaluate();
+	
+    // delete ptr
+	delete optimized_plan;
+
+	return new QueryResult(column_names, column_attributes, rows, "Successfully returned " + std::to_string(rows->size()) + " rows.");
 }
 
 void
-SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
+SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute)
+{
     column_name = col->name;
     switch (col->type) {
         case ColumnDefinition::INT:
