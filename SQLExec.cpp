@@ -221,7 +221,6 @@ QueryResult *SQLExec::del(const DeleteStatement *statement)
 
 QueryResult *SQLExec::select(const SelectStatement *statement)
 {
-    
     // get the table
     DbRelation& table = SQLExec::tables->get_table(statement->fromTable->name);
     
