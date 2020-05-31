@@ -93,6 +93,46 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
+// implemented to recursively address the "=" and "AND"
+ValueDict* get_where_conjunction(const Expr *expr)
+{
+    ValueDict *where = new ValueDict();
+    
+    switch(expr->opType)
+    {
+        case Expr::SIMPLE_OP:
+        {
+            if(expr->opChar == '=')
+            {
+                if(expr->expr2->type == kExprLiteralInt)
+                    where->emplace(string(expr->expr->name), Value(expr->expr2->ival));
+                else if (expr->expr2->type == kExprLiteralString)
+                    where->emplace(string(expr->expr->name), Value(expr->expr2->name));
+                else
+                    throw SQLExecError("unrecognized literal");
+            }
+            else
+                throw SQLExecError("unrecognized operation");
+            break;
+        }
+        // preformed recursively
+        case Expr::AND:
+        {
+            ValueDict* where2 = get_where_conjunction(expr->expr);
+            ValueDict* where3 = get_where_conjunction(expr->expr2);
+            where->insert(where2->begin(), where2->end());
+            where->insert(where3->begin(), where3->end());
+            delete where2;
+            delete where3;
+            break;
+        }
+        default:
+            throw SQLExecError("unrecognized operation");
+            break;
+    }
+    return where;
+}
+
 QueryResult *SQLExec::insert(const InsertStatement *statement)
 {
     // get the table
@@ -178,34 +218,38 @@ QueryResult *SQLExec::del(const DeleteStatement *statement)
 
 QueryResult *SQLExec::select(const SelectStatement *statement)
 {
-    // get table info
+    
+    // get the table
     DbRelation& table = SQLExec::tables->get_table(statement->fromTable->name);
-    EvalPlan* plan = new EvalPlan(table);
-	ColumnNames* column_names = new ColumnNames;
-	ColumnAttributes* column_attributes = new ColumnAttributes;
-
-    // select expressions
-	if (statement->selectList->at(0)->type == kExprStar) 
+    
+    // start base of eval plan
+    EvalPlan *plan = new EvalPlan(table);
+    
+    // enclose select if we have a where
+    if (statement->whereClause != nullptr)
+        plan = new EvalPlan(get_where_conjunction(statement->whereClause), plan);
+    
+    // determine column names
+    ColumnNames *column_names = new ColumnNames;
+    for (Expr *expr : *statement->selectList)
     {
-		*column_names = table.get_column_names();
-		plan = new EvalPlan(EvalPlan::ProjectAll, plan);
-	}
-	else
-    {
-		for (auto const column : *statement->selectList)
-            column_names->push_back(column->name);
-			
-		plan = new EvalPlan(column_names, plan);
-	}
-
-    column_attributes = table.get_column_attributes(*column_names);
-	EvalPlan* optimized_plan = plan->optimize();
-	ValueDicts* rows = optimized_plan->evaluate();
-	
-    // delete ptr
-	delete optimized_plan;
-
-	return new QueryResult(column_names, column_attributes, rows, "Successfully returned " + std::to_string(rows->size()) + " rows.");
+        if(expr->type == kExprStar)
+            *column_names = table.get_column_names();
+        else
+            column_names->push_back(expr->name);
+    }
+    
+    // set the eval plan
+    plan = new EvalPlan(column_names, plan);
+        
+    // optimize and evaluate the plan
+    EvalPlan *optimized = plan->optimize();
+    ValueDicts *rows = optimized->evaluate();
+    
+    //get column attributes for returning in queryResult
+    ColumnAttributes *column_attributes = table.get_column_attributes(*column_names);
+    
+    return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(rows->size()) + " rows");
 }
 
 void
