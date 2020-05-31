@@ -99,7 +99,7 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
     EvalPlan *plan = new EvalPlan(table);
 
     EvalPlan *ev_plan = plan->optimize();
-    EvalPlan pipe = ev_plan->pipeline;
+    EvalPlan pipe = ev_plan->pipeline();
 
     //get handles and index names
     Handles *handles = pipe.second;
