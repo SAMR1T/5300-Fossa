@@ -197,6 +197,9 @@ QueryResult *SQLExec::del(const DeleteStatement *statement)
     DbRelation& table = SQLExec::tables->get_table(table_name);
     EvalPlan *plan = new EvalPlan(table);
 
+    if(statement->expr !=nullptr)
+        plan = new EvalPlan(get_where_conjunction(statement->expr), plan);
+	
     EvalPlan *ev_plan = plan->optimize();
     EvalPipeline pipe = ev_plan->pipeline();
 
