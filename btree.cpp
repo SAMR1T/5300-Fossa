@@ -67,11 +67,40 @@ void BTreeIndex::close() {
     }
 }
 
-// Find all the rows whose columns are equal to key. Assumes key is a dictionary whose keys are the column
-// names in the index. Returns a list of row handles.
-Handles *BTreeIndex::lookup(ValueDict *key_dict) const {
-    // FIXME
-    return nullptr;
+// Find all the rows whose columns are equal to key.
+// Assumes key is a dictionary whose keys are the column names in the index.
+// Returns a list of row handles.
+Handles *BTreeIndex::lookup(ValueDict *key_dict) const 
+{
+    Handles* handle = this->_lookup(this->root, this->stat->get_height(), this->tkey(key_dict));
+    return handle;
+}
+
+Handles* BTreeIndex::_lookup(BTreeNode *node, uint height, const KeyValue* key) const
+{
+    Handles* handle = new Handles;
+    BTreeLeaf* leaf = nullptr;
+    BTreeInterior* interior = nullptr;
+
+    if(dynamic_cast<BTreeLeaf*>(node))
+    {
+        leaf = (BTreeLeaf*)node;
+        try
+        {
+            handle->push_back(leaf->find_eq(key));
+        }
+        catch (...)
+        { 
+            return handle;
+        }
+        return handle;
+
+    }
+    else
+    {
+        interior = (BTreeInterior*)node;
+        return this->_lookup(interior->find(key, height), height - 1, key);
+    }
 }
 
 Handles *BTreeIndex::range(ValueDict *min_key, ValueDict *max_key) const {
