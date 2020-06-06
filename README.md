@@ -3,6 +3,89 @@ DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
 ## Sprint Invierno
 
+**Milestone 6:**
+Implemented btree index insert and lookup in btree.cpp. Does not implement range or del methods. This means that deleting an index will throw an error: "Don't know how to delete from a BTree index yet"
+
+**General Steps for Use:** </br>
+1. Git clone or download this repo
+2. Compile the code by runing "make"
+3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
+4. Try example test commands as below
+5. Enter "quit" to exit
+
+**Test for M6:**
+
+```sql
+SQL> test
+test_heap_storage: test_heap_storage: 
+create ok
+drop ok
+create_if_not_exsts ok
+insert ok
+select/project ok 1
+many inserts/select/projects ok
+del ok
+ok
+test_btree: ok
+SQL> create table foo (id int, data text)
+CREATE TABLE foo (id INT, data TEXT)
+created foo
+SQL> insert into foo values (1,"one");insert into foo values(2,"two"); insert into foo values (2, "another two")
+INSERT INTO foo VALUES (1, "one")
+successfully inserted 1 row into foo
+INSERT INTO foo VALUES (2, "two")
+successfully inserted 1 row into foo
+INSERT INTO foo VALUES (2, "another two")
+successfully inserted 1 row into foo
+SQL> select * from foo
+SELECT * FROM foo
+id data 
++----------+----------+
+1 "one" 
+2 "two" 
+2 "another two" 
+successfully returned 3 rows
+SQL> create index fxx on foo (id)
+CREATE INDEX fxx ON foo USING BTREE (id)
+Error: DbRelationError: Duplicate keys are not allowed in unique index
+SQL> show index from foo
+SHOW INDEX FROM foo
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+successfully returned 0 rows
+SQL> delete from foo where data = "two"
+DELETE FROM foo WHERE data = "two"
+successfully deleted 1 rows from foo
+SQL> select * from foo
+SELECT * FROM foo
+id data 
++----------+----------+
+1 "one" 
+2 "another two" 
+successfully returned 2 rows
+SQL> create index fxx on foo (id)
+CREATE INDEX fxx ON foo USING BTREE (id)
+created index fxx
+SQL> show index from foo
+SHOW INDEX FROM foo
+table_name index_name column_name seq_in_index index_type is_unique 
++----------+----------+----------+----------+----------+----------+
+"foo" "fxx" "id" 1 "BTREE" true 
+successfully returned 1 rows
+SQL> insert into foo values (4,"four")
+INSERT INTO foo VALUES (4, "four")
+successfully inserted 1 row into foo and 1 indices
+SQL> select * from foo
+SELECT * FROM foo
+id data 
++----------+----------+
+1 "one" 
+2 "another two" 
+4 "four" 
+successfully returned 3 rows
+SQL> quit
+```
+
 **Milstone 5:**
 Implemented certain INSERT, SELECT, and DELETE statements.
 
