@@ -130,7 +130,9 @@ Insertion BTreeIndex::_insert(BTreeNode *node, uint height, const KeyValue *key,
         return leaf->insert(key, handle);
     } else {
         auto *interior = dynamic_cast<BTreeInterior *>(node);
-        Insertion insertion = _insert(interior->find(key, height), height - 1, key, handle);
+        auto *child = interior->find(key, height);
+        Insertion insertion = _insert(child, height - 1, key, handle);
+        delete child;
         if (!BTreeNode::insertion_is_none(insertion))
             insertion = interior->insert(&insertion.second, insertion.first);
         return insertion;
@@ -161,6 +163,7 @@ void BTreeIndex::build_key_profile() {
         key_profile.push_back(types_by_colname[column_name]);
 }
 
+
 bool test_btree() {
     ColumnNames column_names;
     column_names.push_back("a");
@@ -177,7 +180,7 @@ bool test_btree() {
     row2["b"] = Value(101);
     table.insert(&row1);
     table.insert(&row2);
-    for (int i = 0; i < 100 * 1000; i++) {
+    for (int i = 0; i < 50 * 1000; i++) {
         ValueDict row;
         row["a"] = Value(i + 100);
         row["b"] = Value(-i);
@@ -187,6 +190,7 @@ bool test_btree() {
     column_names.push_back("a");
     BTreeIndex index(table, "fooindex", column_names, true);
     index.create();
+
     ValueDict lookup;
     lookup["a"] = 12;
     Handles *handles = index.lookup(&lookup);
@@ -221,6 +225,7 @@ bool test_btree() {
         return false;
     }
     delete handles;
+
     for (uint j = 0; j < 10; j++)
         for (int i = 0; i < 1000; i++) {
             lookup["a"] = i + 100;
@@ -239,6 +244,7 @@ bool test_btree() {
             delete handles;
             delete result;
         }
+
     index.drop();
     table.drop();
     return true;
